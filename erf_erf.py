@@ -6,6 +6,8 @@ from scipy.linalg import orth
 from numpy import sqrt as sqrt 
 from numpy.linalg import inv as inverse_matrix
 
+from committee_learning.ode.cython_erf import erf_updates
+
 
 p = 10
 d = 1000
@@ -17,7 +19,7 @@ gamma0 = .6
 noise = 0.
 alpha = 0.
 mc_samples = 40000
-second_layer_update = False
+second_layer_update = True
 activation = lambda x: erf(x/sqrt(2))
 activation_derivative = lambda x: sqrt(2/np.pi) * np.exp(-x**2/2)
 target_activation = activation
@@ -99,7 +101,7 @@ for tau in range(1,T):
     a = as_GD[-1]
     displacements = np.apply_along_axis(target, -1, zs @ W_star.T) + sqrt(noise)*np.random.normal(size=(n,)) - np.apply_along_axis(network, -1, zs @ W.T, a, activation)
     updated_W = W + gamma0 * sqrt(p) * d**((l-1)/2) * np.einsum('j,uj,u,ui->ji',a,activation_derivative(zs @ W.T),displacements,zs)/n
-    X = activation(zs @ updated_W.T)/sqrt(p) # updated_features
+    X = activation(zs @ updated_W.T) # updated_features
     if second_layer_update:
         updated_a = inverse_matrix(X.T @ X + alpha*np.eye(p)) @ X.T @ ys
     else:
@@ -113,12 +115,10 @@ for tau in range(1,T):
     M = Ms[-1]
     Q = Qs[-1]
     a = as_SS[-1]
-    def M_update(network_field, target_field, a, noise_randomness):
-        return (
-            (target(target_field)+sqrt(noise)*noise_randomness-network(network_field, a, activation)) *
-            np.einsum('j,j,r->jr', a, activation_derivative(network_field), target_field)
-        )
-    updated_M = M + gamma0 * sqrt(p) * d**((l-1)/2) *  local_fields_montecarlo(M_update, mc_samples, Q, M, P, a)
+
+    upQ, upM = erf_updates(Q, M, P, noise_term = True, gamma_over_p = gamma0/p, noise=noise, quadratic_terms=True)
+
+    # updated_M = M + gamma0 * sqrt(p) * d**((l-1)/2) *  
     def I3_Q_update(network_field, target_field, a, noise_randomness):
         return (
             (target(target_field)+sqrt(noise)*noise_randomness-network(network_field, a, activation)) * (
@@ -131,7 +131,7 @@ for tau in range(1,T):
             (target(target_field)+sqrt(noise)*noise_randomness-network(network_field, a, activation))**2 * 
             np.einsum('j,l,j,l->jl', a, a, activation_derivative(network_field), activation_derivative(network_field))
         )
-    updated_Q = Q + gamma0 * sqrt(p) * d**((l-1)/2) * local_fields_montecarlo(I3_Q_update, mc_samples, Q, M, P, a) + gamma0**2 * p * local_fields_montecarlo(I4_Q_update, mc_samples, Q, M, P, a)
+    updated_Q = Q + gamma0 * sqrt(p) * d**((l-1)/2) * local_fields_montecarlo(I3_Q_update, mc_samples, Q, M, P, a) + gamma0 * p * local_fields_montecarlo(I4_Q_update, mc_samples, Q, M, P, a)
     
     def a_update_cross(network_field, target_field, a, noise_randomness):
         return np.einsum('j,l->jl',activation(network_field), activation(network_field))
@@ -209,6 +209,7 @@ plt.legend()
 plt.xlabel('steps')
 plt.ylim(0., 1.1)
 plt.show()
+
 
 
 
