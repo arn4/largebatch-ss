@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.linalg import inv as inverse_matrix
 
 class GiantStepBase():
     def __init__(self,
@@ -40,6 +41,7 @@ class OverlapsBase(GiantStepBase):
         self.Ms = [M0]
         self.Qs = [Q0]
         self.P = P
+        self.inverse_P = inverse_matrix(P)
 
     @property
     def M(self):
