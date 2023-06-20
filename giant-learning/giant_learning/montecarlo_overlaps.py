@@ -19,13 +19,6 @@ class MonteCarloOverlaps(OverlapsBase):
         if mc_size is None:
             self.mc_size = self.n
         self.mc_size = mc_size
-
-        ###########
-        self.eq5 = []
-        self.eq6 = []
-        self.eq7 = []
-        ###########
-
         self.measure()
     
     def local_fields_montecarlo(self, fs, std = False):
@@ -54,7 +47,7 @@ class MonteCarloOverlaps(OverlapsBase):
                 return np.mean(datas[0], axis=0)
 
 
-    def update(self):
+    def compute_expected_values(self):
         def local_field_term_target(network_field, target_field, noise_randomness):
             return (
                 (self.target(target_field)+np.sqrt(self.noise)*noise_randomness-self.network(network_field)) *
@@ -67,83 +60,19 @@ class MonteCarloOverlaps(OverlapsBase):
                 np.einsum('j,l->jl', self.activation_derivative(network_field), network_field)
             )
         
-        def local_field_term_orthogonal(network_field, target_field, noise_randomness):
-            orthogonal_field = network_field - self.M @ self.inverse_P @ target_field
+        def local_field_I4(network_field, target_field, noise_randomness):
             return (
-                (self.target(target_field)+np.sqrt(self.noise)*noise_randomness-self.network(network_field)) *
-                np.einsum('j,l->jl', self.activation_derivative(network_field), orthogonal_field)
+                (self.target(target_field)+np.sqrt(self.noise)*noise_randomness-self.network(network_field))**2 *
+                np.einsum('j,l->jl', self.activation_derivative(network_field), self.activation_derivative(network_field))
             )
         
-        inverse_Qbot = inverse_matrix(self.Q - self.M @ self.inverse_P @ self.M.T)
 
-        # expected_value_target = self.local_fields_montecarlo(local_field_term_target) # p x k
-        # expected_value_network = self.local_fields_montecarlo(local_field_term_network) # p x p
-        expected_value_target, expected_value_network = self.local_fields_montecarlo((local_field_term_target, local_field_term_network)) # p x k
-        # expected_value_network = self.local_fields_montecarlo(local_field_term_network) # p x p
-        expected_value_orthogonal = self.local_fields_montecarlo(local_field_term_orthogonal)
-        # expected_value_orthogonal = expected_value_network - self.M @ self.inverse_P @ (expected_value_target.T)
+        return self.local_fields_montecarlo((local_field_term_target, local_field_term_network, local_field_I4)) 
 
-
-        ##############
-        self.eq5.append(
-            self.gamma0 * np.sqrt(self.p) * np.power(self.d, (self.l-1)/2) * np.einsum('j,jr->jr', self.a, expected_value_target)
-        )
-        self.eq6.append(
-            self.gamma0 * np.sqrt(self.p) * np.power(self.d, (self.l-1)/2) * (
-                np.einsum('j,jl->jl', self.a, expected_value_network) +
-                np.einsum('l,lj->jl', self.a, expected_value_network)
-            )
-        )
-        self.eq7.append(
-            self.gamma0**2 * self.p * np.power(self.d, (self.l-1)) * np.einsum('j,l->jl', self.a, self.a) * (
-                np.einsum('jr,rt,lt->jl', expected_value_target, self.inverse_P, expected_value_target) +
-                np.einsum('jm,mn,ln->jl', expected_value_orthogonal, inverse_Qbot, expected_value_orthogonal)
-            )
-        )
-        ##############
-
-        self.Ms.append(
-            self.M + self.gamma0 * np.sqrt(self.p) * np.power(self.d, (self.l-1)/2) * np.einsum('j,jr->jr', self.a, expected_value_target)
-        )
-        self.Qs.append(
-            self.Q + self.gamma0 * np.sqrt(self.p) * np.power(self.d, (self.l-1)/2) * (
-                np.einsum('j,jl->jl', self.a, expected_value_network) +
-                np.einsum('l,lj->jl', self.a, expected_value_network)
-            ) + self.gamma0**2 * self.p * np.power(self.d, (self.l-1)) * np.einsum('j,l->jl', self.a, self.a) * (
-                np.einsum('jr,rt,lt->jl', expected_value_target, self.inverse_P, expected_value_target) +
-                np.einsum('jm,mn,ln->jl', expected_value_orthogonal, inverse_Qbot, expected_value_orthogonal)
-            )
-        )
-
-
-        # def local_field_M_update(network_field, target_field, noise_randomness):
-        #     return (
-        #         (self.target(target_field)+np.sqrt(self.noise)*noise_randomness-self.network(network_field)) *
-        #         np.einsum('j,j,r->jr', self.a, self.activation_derivative(network_field), target_field)
-        #     )
-        # self.Ms.append(
-        #     self.M + self.gamma0 * np.sqrt(self.p) * np.power(self.d, (self.l-1)/2) * self.local_fields_montecarlo(local_field_M_update)
-        # )
-
-        # def local_field_I3_Q_update(network_field, target_field, noise_randomness):
-        #     return (
-        #         (self.target(target_field)+np.sqrt(self.noise)*noise_randomness-self.network(network_field)) * (
-        #             np.einsum('j,j,l->jl', self.a, self.activation_derivative(network_field), network_field) +
-        #             np.einsum('l,l,j->jl', self.a, self.activation_derivative(network_field), network_field)
-        #         )
-        #     )
-        # def local_field_I4_Q_update(network_field, target_field, noise_randomness):
-        #     bot_fields = network_field - self.M @ self.inverse_P @ target_field
-        #     return (
-        #         (self.target(target_field)+np.sqrt(self.noise)*noise_randomness-self.network(network_field))**2 * 
-        #         np.einsum('j,l,j,l->jl', self.a, self.a, self.activation_derivative(network_field), self.activation_derivative(network_field))
-        #     )
-        # self.Qs.append(
-        #     self.Q + self.gamma0 * np.sqrt(self.p) * np.power(self.d, (self.l-1)/2) * self.local_fields_montecarlo(local_field_I3_Q_update) 
-        #     + self.gamma0**2 * self.p * self.local_fields_montecarlo(local_field_I4_Q_update)
-        # )
-    
     def measure(self):
+        ###############
+        return
+        ###############
         def local_field_error(network_field, target_field, noise_randomness):
             return .5*(self.target(target_field)+np.sqrt(self.noise)*noise_randomness-self.network(network_field))**2
         

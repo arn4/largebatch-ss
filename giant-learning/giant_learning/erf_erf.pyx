@@ -25,83 +25,76 @@ cdef extern from 'erf_erf_integrals.cpp' namespace 'giant_learning::erf_erf':
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cpdef erf_updates(np.ndarray[DTYPE_t, ndim=2] Q, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] P, np.ndarray[DTYPE_t, ndim=1] a, DTYPE_t gamma0, DTYPE_t noise, DTYPE_t dimension_factor):
-  cdef np.ndarray[DTYPE_t, ndim=2] dQ = np.zeros_like(Q, dtype=DTYPE)
-  cdef np.ndarray[DTYPE_t, ndim=2] dM = np.zeros_like(M, dtype=DTYPE)
-
+cpdef erf_updates(np.ndarray[DTYPE_t, ndim=2] Q, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] P, np.ndarray[DTYPE_t, ndim=1] a, DTYPE_t noise):
+  cdef np.ndarray[DTYPE_t, ndim=2] expected_I3_network = np.zeros_like(Q, dtype=DTYPE)
+  cdef np.ndarray[DTYPE_t, ndim=2] expected_I3_target = np.zeros_like(M, dtype=DTYPE)
+  cdef np.ndarray[DTYPE_t, ndim=2] expected_I4 = np.zeros_like(Q, dtype=DTYPE)
   cdef int p = Q.shape[0]
   cdef int k = P.shape[0]
   cdef DTYPE_t one_over_sqrtp = 1./sqrt(p)
   cdef DTYPE_t one_over_k = 1./k
-  cdef DTYPE_t I3_prefactor = gamma0 * sqrt(p) * dimension_factor
-  cdef DTYPE_t I4_prefactor = gamma0**2 * p
-  cdef DTYPE_t I3_Qjl = 0.
-  cdef DTYPE_t I4_Qjl = 0.
 
   # Indexs for the for cycles (needed to have pure C for-loops)
   cdef int j,l,r,o,q,m,s
 
-  ## Compute dM
+  ## Compute expected_I3_target
   # Fixed the pair (j,r)
   for j in range(p):
     for r in range(0,k):
 
       # Student
       for l in range(0,p):
-        dM[j,r] -= one_over_sqrtp * a[l] * I3(Q[j,j], M[j,r], Q[j,l], P[r,r], M[l,r], Q[l,l])
+        expected_I3_target[j,r] -= one_over_sqrtp * a[l] * I3(Q[j,j], M[j,r], Q[j,l], P[r,r], M[l,r], Q[l,l])
 
       # Teacher
       for s in range(0,k):
-        dM[j, r] += one_over_k * I3(Q[j,j], M[j,r], M[j,s], P[r,r], P[r,s], P[s,s]) 
+        expected_I3_target[j, r] += one_over_k * I3(Q[j,j], M[j,r], M[j,s], P[r,r], P[r,s], P[s,s]) 
 
-      dM[j, r] *= I3_prefactor * a[j]
 
     
 
-  ### Compute dQ below-diag
+  ### Compute expected_I3_network & expected_I4 
   for j in range(0,p):
     for l in range(0,j+1): # We are using the fact that Q is symmetric, so we compute only the below/on diagonal
-      I3_Qjl = 0.
-      I4_Qjl = 0.
+
       ## I3 contribution
       for m in range(0,p):
-        I3_Qjl -= one_over_sqrtp * (
+        expected_I3_network[j,l] -= one_over_sqrtp * (
           a[j] * a[m] * I3(Q[j,j], Q[j,l], Q[j,m], Q[l,l], Q[l,m], Q[m,m]) + # student-student (jl) 
           a[l] * a[m] * I3(Q[l,l], Q[l,j], Q[l,m], Q[j,j], Q[j,m], Q[m,m])   # student-student (lj)
         ) 
 
       for r in range(0,k):
-        I3_Qjl += one_over_k * (
+        expected_I3_network[j,l] += one_over_k * (
           a[j] * I3(Q[j,j], Q[j,l], M[j,r], Q[l,l], M[l,r], P[r,r]) + # student-teacher (jl)
           a[l] * I3(Q[l,l], Q[l,j], M[l,r], Q[j,j], M[j,r], P[r,r])   # student-teacher (lj)
         )
 
 
       ## Noise term
-      I4_Qjl += noise * I2_noise(Q[j,j], Q[j,l], Q[l,l])
+      expected_I4[j,l] += noise * I2_noise(Q[j,j], Q[j,l], Q[l,l])
       
       ## I4 contribution
       # Student-student
       for o in range(0,p):
         for q in range(0,p):
-          I4_Qjl += square(one_over_sqrtp) * a[o]*a[q] * I4(Q[j,j], Q[j,l], Q[j,o], Q[j,q], Q[l,l], Q[l,o], Q[l,q], Q[o,o], Q[o,q], Q[q,q])
+          expected_I4[j,l] += square(one_over_sqrtp) * a[o]*a[q] * I4(Q[j,j], Q[j,l], Q[j,o], Q[j,q], Q[l,l], Q[l,o], Q[l,q], Q[o,o], Q[o,q], Q[q,q])
 
       # Student-teacher
       for o in range(0,p):
         for r in range(0,k):
-          I4_Qjl -= 2 * one_over_sqrtp * one_over_k * a[o] * I4(Q[j,j], Q[j,l], Q[j,o], M[j,r], Q[l,l], Q[l,o], M[l,r], Q[o,o], M[o,r], P[r,r])
+          expected_I4[j,l] -= 2 * one_over_sqrtp * one_over_k * a[o] * I4(Q[j,j], Q[j,l], Q[j,o], M[j,r], Q[l,l], Q[l,o], M[l,r], Q[o,o], M[o,r], P[r,r])
 
       # Teacher-Teacher
       for r in range(0,k):
         for s in range(0,k):
-          I4_Qjl += square(one_over_k) * I4(Q[j,j], Q[j,l], M[j,r], M[j,s], Q[l,l], M[l,r], M[l,s], P[r,r], P[r,s], P[s,s])
+          expected_I4[j,l] += square(one_over_k) * I4(Q[j,j], Q[j,l], M[j,r], M[j,s], Q[l,l], M[l,r], M[l,s], P[r,r], P[r,s], P[s,s])
 
-      dQ[j,l] = I3_prefactor * I3_Qjl + I4_prefactor * a[j]*a[l] * I4_Qjl
       ## Symmetrize Q
       if j != l:
-        dQ[l,j] = dQ[j,l]      
-
-  return dQ, dM
+        expected_I4[l,j] = expected_I4[j,l]
+        expected_I3_network[l,j] = expected_I3_network[j,l] 
+  return expected_I3_target, expected_I3_network, expected_I4
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -135,98 +128,3 @@ cpdef erf_error(np.ndarray[DTYPE_t, ndim=2] Q, np.ndarray[DTYPE_t, ndim=2] M, np
   return risk
 
 
-  #####################################
-cpdef erf_I3(np.ndarray[DTYPE_t, ndim=2] Q, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] P, np.ndarray[DTYPE_t, ndim=1] a, DTYPE_t gamma0, DTYPE_t noise, DTYPE_t dimension_factor):
-  cdef np.ndarray[DTYPE_t, ndim=2] dQ = np.zeros_like(Q, dtype=DTYPE)
-
-  cdef int p = Q.shape[0]
-  cdef int k = P.shape[0]
-  cdef DTYPE_t one_over_sqrtp = 1./sqrt(p)
-  cdef DTYPE_t one_over_k = 1./k
-  cdef DTYPE_t I3_prefactor = gamma0 * sqrt(p) * dimension_factor
-  cdef DTYPE_t I4_prefactor = gamma0**2 * p
-  cdef DTYPE_t I3_Qjl = 0.
-  cdef DTYPE_t I4_Qjl = 0.
-
-  # Indexs for the for cycles (needed to have pure C for-loops)
-  cdef int j,l,r,o,q,m,s
-
-
-    
-
-  ### Compute dQ below-diag
-  for j in range(0,p):
-    for l in range(0,j+1): # We are using the fact that Q is symmetric, so we compute only the below/on diagonal
-      I3_Qjl = 0.
-      I4_Qjl = 0.
-      ## I3 contribution
-      for m in range(0,p):
-        I3_Qjl -= one_over_sqrtp * (
-          a[j] * a[m] * I3(Q[j,j], Q[j,l], Q[j,m], Q[l,l], Q[l,m], Q[m,m]) + # student-student (jl) 
-          a[l] * a[m] * I3(Q[l,l], Q[l,j], Q[l,m], Q[j,j], Q[j,m], Q[m,m])   # student-student (lj)
-        ) 
-
-      for r in range(0,k):
-        I3_Qjl += one_over_k * (
-          a[j] * I3(Q[j,j], Q[j,l], M[j,r], Q[l,l], M[l,r], P[r,r]) + # student-teacher (jl)
-          a[l] * I3(Q[l,l], Q[l,j], M[l,r], Q[j,j], M[j,r], P[r,r])   # student-teacher (lj)
-        )
-
-
-      dQ[j,l] = I3_prefactor * I3_Qjl # + I4_prefactor * a[j]*a[l] * I4_Qjl
-      ## Symmetrize Q
-      if j != l:
-        dQ[l,j] = dQ[j,l]      
-
-  return dQ
-
-
-
-
-cpdef erf_I4(np.ndarray[DTYPE_t, ndim=2] Q, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] P, np.ndarray[DTYPE_t, ndim=1] a, DTYPE_t gamma0, DTYPE_t noise, DTYPE_t dimension_factor):
-  cdef np.ndarray[DTYPE_t, ndim=2] dQ = np.zeros_like(Q, dtype=DTYPE)
-
-  cdef int p = Q.shape[0]
-  cdef int k = P.shape[0]
-  cdef DTYPE_t one_over_sqrtp = 1./sqrt(p)
-  cdef DTYPE_t one_over_k = 1./k
-  cdef DTYPE_t I3_prefactor = gamma0 * sqrt(p) * dimension_factor
-  cdef DTYPE_t I4_prefactor = gamma0**2 * p
-  cdef DTYPE_t I3_Qjl = 0.
-  cdef DTYPE_t I4_Qjl = 0.
-
-  # Indexs for the for cycles (needed to have pure C for-loops)
-  cdef int j,l,r,o,q,m,s
-
-  ### Compute dQ below-diag
-  for j in range(0,p):
-    for l in range(0,j+1): # We are using the fact that Q is symmetric, so we compute only the below/on diagonal
-      I3_Qjl = 0.
-      I4_Qjl = 0.
-
-
-  ## Noise term
-      I4_Qjl += noise * I2_noise(Q[j,j], Q[j,l], Q[l,l])
-      
-      ## I4 contribution
-      # Student-student
-      for o in range(0,p):
-        for q in range(0,p):
-          I4_Qjl += square(one_over_sqrtp) * a[o]*a[q] * I4(Q[j,j], Q[j,l], Q[j,o], Q[j,q], Q[l,l], Q[l,o], Q[l,q], Q[o,o], Q[o,q], Q[q,q])
-
-      # Student-teacher
-      for o in range(0,p):
-        for r in range(0,k):
-          I4_Qjl -= 2 * one_over_sqrtp * one_over_k * a[o] * I4(Q[j,j], Q[j,l], Q[j,o], M[j,r], Q[l,l], Q[l,o], M[l,r], Q[o,o], M[o,r], P[r,r])
-
-      # Teacher-Teacher
-      for r in range(0,k):
-        for s in range(0,k):
-          I4_Qjl += square(one_over_k) * I4(Q[j,j], Q[j,l], M[j,r], M[j,s], Q[l,l], M[l,r], M[l,s], P[r,r], P[r,s], P[s,s])
-
-      dQ[j,l] = I4_prefactor * a[j]*a[l] * I4_Qjl
-      ## Symmetrize Q
-      if j != l:
-        dQ[l,j] = dQ[j,l]      
-
-  return dQ

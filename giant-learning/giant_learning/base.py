@@ -19,7 +19,7 @@ class GiantStepBase():
         self.noise = noise
         self.second_layer_update = second_layer_update
         self.alpha = alpha
-
+        
 
         self.a_s = [a0]
         self.test_errors = []
@@ -42,6 +42,11 @@ class OverlapsBase(GiantStepBase):
         self.Qs = [Q0]
         self.P = P
         self.inverse_P = inverse_matrix(P)
+        ###########
+        self.eq5 = []
+        self.eq6 = []
+        self.eq7 = []
+        ###########
 
     @property
     def M(self):
@@ -55,4 +60,41 @@ class OverlapsBase(GiantStepBase):
         for _ in range(steps):
             self.update()
             self.measure()
+
+    def update(self):
+        inverse_Qbot = inverse_matrix(self.Q - self.M @ self.inverse_P @ self.M.T)
+        expected_value_target, expected_value_network, expected_I4 = self.compute_expected_values() 
+        expected_value_orthogonal = expected_value_network - self.M @ self.inverse_P @ (expected_value_target.T)
+        self.Ms.append(
+            self.M + self.gamma0 * np.sqrt(self.p) * np.power(self.d, (self.l-1)/2) * np.einsum('j,jr->jr', self.a, expected_value_target)
+        )
+        self.Qs.append(
+            self.Q + self.gamma0 * np.sqrt(self.p) * np.power(self.d, (self.l-1)/2) * (
+                np.einsum('j,jl->jl', self.a, expected_value_network) +
+                np.einsum('l,lj->jl', self.a, expected_value_network)
+            ) + self.gamma0**2 * self.p * np.power(self.d, (self.l-1)) * np.einsum('j,l->jl', self.a, self.a) * (
+                np.einsum('jr,rt,lt->jl', expected_value_target, self.inverse_P, expected_value_target) +
+                np.einsum('jm,mn,ln->jl', expected_value_orthogonal, inverse_Qbot, expected_value_orthogonal)
+            ) + self.gamma0**2 * self.p * np.einsum('j,l->jl', self.a, self.a) * expected_I4 
+        )
+
+        ##############
+        self.eq5.append(
+            self.gamma0 * np.sqrt(self.p) * np.power(self.d, (self.l-1)/2) * np.einsum('j,jr->jr', self.a, expected_value_target)
+        )
+        self.eq6.append(
+            self.gamma0 * np.sqrt(self.p) * np.power(self.d, (self.l-1)/2) * (
+                np.einsum('j,jl->jl', self.a, expected_value_network) +
+                np.einsum('l,lj->jl', self.a, expected_value_network)
+            )
+        )
+        self.eq7.append(
+            self.gamma0**2 * self.p * np.power(self.d, (self.l-1)) * np.einsum('j,l->jl', self.a, self.a) * (
+                np.einsum('jr,rt,lt->jl', expected_value_target, self.inverse_P, expected_value_target) +
+                np.einsum('jm,mn,ln->jl', expected_value_orthogonal, inverse_Qbot, expected_value_orthogonal)
+            )
+            +
+             self.gamma0**2 * self.p * np.einsum('j,l->jl', self.a, self.a) * expected_I4
+        )
+        ##############
 
