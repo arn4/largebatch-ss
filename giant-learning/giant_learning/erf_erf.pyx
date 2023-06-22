@@ -22,9 +22,9 @@ cdef extern from 'erf_erf_integrals.cpp' namespace 'giant_learning::erf_erf':
   cdef inline DTYPE_t I3(DTYPE_t C11, DTYPE_t C12, DTYPE_t C13, DTYPE_t C22, DTYPE_t C23, DTYPE_t C33)
   cdef inline DTYPE_t I4(DTYPE_t C11, DTYPE_t C12, DTYPE_t C13, DTYPE_t C14, DTYPE_t C22, DTYPE_t C23, DTYPE_t C24, DTYPE_t C33, DTYPE_t C34, DTYPE_t C44)
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.cdivision(True)
 cpdef erf_updates(np.ndarray[DTYPE_t, ndim=2] Q, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] P, np.ndarray[DTYPE_t, ndim=1] a, DTYPE_t noise):
   cdef np.ndarray[DTYPE_t, ndim=2] expected_I3_network = np.zeros_like(Q, dtype=DTYPE)
   cdef np.ndarray[DTYPE_t, ndim=2] expected_I3_target = np.zeros_like(M, dtype=DTYPE)
@@ -60,14 +60,14 @@ cpdef erf_updates(np.ndarray[DTYPE_t, ndim=2] Q, np.ndarray[DTYPE_t, ndim=2] M, 
       ## I3 contribution
       for m in range(0,p):
         expected_I3_network[j,l] -= one_over_sqrtp * (
-          a[j] * a[m] * I3(Q[j,j], Q[j,l], Q[j,m], Q[l,l], Q[l,m], Q[m,m]) + # student-student (jl) 
-          a[l] * a[m] * I3(Q[l,l], Q[l,j], Q[l,m], Q[j,j], Q[j,m], Q[m,m])   # student-student (lj)
+          a[m] * I3(Q[j,j], Q[j,l], Q[j,m], Q[l,l], Q[l,m], Q[m,m]) + # student-student (jl) 
+          a[m] * I3(Q[l,l], Q[l,j], Q[l,m], Q[j,j], Q[j,m], Q[m,m])   # student-student (lj)
         ) 
 
       for r in range(0,k):
         expected_I3_network[j,l] += one_over_k * (
-          a[j] * I3(Q[j,j], Q[j,l], M[j,r], Q[l,l], M[l,r], P[r,r]) + # student-teacher (jl)
-          a[l] * I3(Q[l,l], Q[l,j], M[l,r], Q[j,j], M[j,r], P[r,r])   # student-teacher (lj)
+          I3(Q[j,j], Q[j,l], M[j,r], Q[l,l], M[l,r], P[r,r]) + # student-teacher (jl)
+          I3(Q[l,l], Q[l,j], M[l,r], Q[j,j], M[j,r], P[r,r])   # student-teacher (lj)
         )
 
 
@@ -93,7 +93,8 @@ cpdef erf_updates(np.ndarray[DTYPE_t, ndim=2] Q, np.ndarray[DTYPE_t, ndim=2] M, 
       ## Symmetrize Q
       if j != l:
         expected_I4[l,j] = expected_I4[j,l]
-        expected_I3_network[l,j] = expected_I3_network[j,l] 
+        expected_I3_network[l,j] = expected_I3_network[j,l]
+
   return expected_I3_target, expected_I3_network, expected_I4
 
 @cython.boundscheck(False)

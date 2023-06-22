@@ -19,7 +19,7 @@ class ErfErfOverlaps(OverlapsBase):
         super().__init__(_target, _activation, _activation_derivative, P, M0, Q0, a0, gamma0, d, l, noise, second_layer_update, alpha)
         self.measure()
     def compute_expected_values(self):
-        return erf_updates(self.P, self.M, self.Q, self.a, self.noise)
+        return erf_updates(self.Q, self.M, self.P, self.a, self.noise)
     def measure(self):
         self.test_errors.append(erf_error(self.Q, self.M, self.P, self.a, self.noise))
         

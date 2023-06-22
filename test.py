@@ -15,22 +15,25 @@ T = 1
 gamma0 = 1.
 noise = 0.
 alpha = 0.
-mc_samples = 1000000
+mc_sampleses = np.logspace(2 ,6 , base = 10 , num = 6, dtype=int)
 second_layer_update = False
 activation = lambda x: erf(x/np.sqrt(2))
 activation_derivative = lambda x: np.sqrt(2/np.pi) * np.exp(-x**2/2)
 nseeds = 1
-ds = np.logspace(8 ,10, base =2 , num = 3, dtype=int)
+# ds = np.logspace(8 ,10, base =2 , num = 3, dtype=int)
+d = 1000000
 relative_Ms = [] ; relative_Qfaciles = [] ; relative_Qdifficiles = []
 relativeMs_erf = [] ; relativeQs_erf = [] ; relativeQdiffs_erf = []
 relativeMs_erf_mc = [] ; relativeQs_erf_mc = [] ; relativeQdiffs_erf_mc = []
-for d in ds:
+# for d in ds:
+for mc_samples in mc_sampleses:
     n = d**l
-    relative_M = np.zeros((T,p,k)) ; relative_Q = np.zeros((T,p,k)) ; relative_Qdiff = np.zeros((T,p,k))
-    relative_M_erf = np.zeros((T,p,k)) ; relative_Q_erf = np.zeros((T,p,k)) ; relative_Qdiff_erf = np.zeros((T,p,k))        
-    relative_M_erf_mc = np.zeros((T,p,k)) ; relative_Q_erf_mc = np.zeros((T,p,k)) ; relative_Qdiff_erf_mc = np.zeros((T,p,k))
+    relative_M = np.zeros((T,p,k)) ; relative_Q = np.zeros((T,p,p)) ; relative_Qdiff = np.zeros((T,p,p))
+    relative_M_erf = np.zeros((T,p,k)) ; relative_Q_erf = np.zeros((T,p,p)) ; relative_Qdiff_erf = np.zeros((T,p,p))        
+    relative_M_erf_mc = np.zeros((T,p,k)) ; relative_Q_erf_mc = np.zeros((T,p,p)) ; relative_Qdiff_erf_mc = np.zeros((T,p,p))
     for _ in range(nseeds):
-        print(f'NOW Running d = {d}')
+        # print(f'NOW Running d = {d}')
+        print(f'NOW Running mc_samples = {mc_samples}   ')
         Wtarget = orth((normalize(np.random.normal(size=(k,d)), axis=1, norm='l2')).T).T
         # Wtarget = 1/np.sqrt(d) * np.random.normal(size=(k,d))
         W0 = 1/np.sqrt(d) * np.random.normal(size=(p,d))
@@ -39,6 +42,14 @@ for d in ds:
         Q0 = W0 @ W0.T
         M0 = W0 @ Wtarget.T
         P = Wtarget @ Wtarget.T
+
+        # effective dimension
+        ed = 5
+
+        P0 = np.array([[1., np.sqrt(ed)/ed], [np.sqrt(ed)/ed, 1.]])
+        M0 = np.array([[np.sqrt(ed)/ed, np.sqrt(ed)/ed], [np.sqrt(ed)/ed, -np.sqrt(ed)/ed]])
+        Q0 = np.array([[1., np.sqrt(ed)/ed], [np.sqrt(ed)/ed, 1.]])
+        Q0 = np.array([[1., 0.], [0., 1.]])
 
 
         # Create a gradient descent object
@@ -118,16 +129,16 @@ for d in ds:
 ######## PLOTS ########
 # plt.ylim(0.,.12)
 plt.xscale('log')
-# plt.yscale('log')
+plt.yscale('log')
 # plt.plot(ds, relative_Ms, label='M', marker='o')
 # plt.plot(ds, relative_Qfaciles, label='Q facile', marker='o')
 # plt.plot(ds, relative_Qdifficiles, label='Q difficile', marker='o')
 # plt.plot(ds, relativeMs_erf, label='M erf', marker='x')
 # plt.plot(ds, relativeQs_erf, label='Q facile erf', marker='x')
 # plt.plot(ds, relativeQdiffs_erf, label='Q difficile erf', marker='x')
-plt.plot(ds,relativeMs_erf_mc, label='M erf mc', marker='x')
-plt.plot(ds,relativeQs_erf_mc, label='Q facile erf mc', marker='x')
-plt.plot(ds,relativeQdiffs_erf_mc, label='Q difficile erf mc', marker='x')
+plt.plot(mc_sampleses,relativeMs_erf_mc, label='M erf mc', marker='x')
+plt.plot(mc_sampleses,relativeQs_erf_mc, label='Q facile erf mc', marker='x')
+plt.plot(mc_sampleses,relativeQdiffs_erf_mc, label='Q difficile erf mc', marker='x')
 plt.legend()
 plt.show()
 ### error plots 
