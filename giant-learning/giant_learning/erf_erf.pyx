@@ -22,9 +22,9 @@ cdef extern from 'erf_erf_integrals.cpp' namespace 'giant_learning::erf_erf':
   cdef inline DTYPE_t I3(DTYPE_t C11, DTYPE_t C12, DTYPE_t C13, DTYPE_t C22, DTYPE_t C23, DTYPE_t C33)
   cdef inline DTYPE_t I4(DTYPE_t C11, DTYPE_t C12, DTYPE_t C13, DTYPE_t C14, DTYPE_t C22, DTYPE_t C23, DTYPE_t C24, DTYPE_t C33, DTYPE_t C34, DTYPE_t C44)
 
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
-# @cython.cdivision(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 cpdef erf_updates(np.ndarray[DTYPE_t, ndim=2] Q, np.ndarray[DTYPE_t, ndim=2] M, np.ndarray[DTYPE_t, ndim=2] P, np.ndarray[DTYPE_t, ndim=1] a, DTYPE_t noise):
   cdef np.ndarray[DTYPE_t, ndim=2] expected_I3_network = np.zeros_like(Q, dtype=DTYPE)
   cdef np.ndarray[DTYPE_t, ndim=2] expected_I3_target = np.zeros_like(M, dtype=DTYPE)
@@ -50,26 +50,16 @@ cpdef erf_updates(np.ndarray[DTYPE_t, ndim=2] Q, np.ndarray[DTYPE_t, ndim=2] M, 
       for s in range(0,k):
         expected_I3_target[j, r] += one_over_k * I3(Q[j,j], M[j,r], M[j,s], P[r,r], P[r,s], P[s,s]) 
 
-
-    
-
   ### Compute expected_I3_network & expected_I4 
   for j in range(0,p):
-    for l in range(0,j+1): # We are using the fact that Q is symmetric, so we compute only the below/on diagonal
+    for l in range(0,p):
 
-      ## I3 contribution
+      ## Student
       for m in range(0,p):
-        expected_I3_network[j,l] -= one_over_sqrtp * (
-          a[m] * I3(Q[j,j], Q[j,l], Q[j,m], Q[l,l], Q[l,m], Q[m,m]) + # student-student (jl) 
-          a[m] * I3(Q[l,l], Q[l,j], Q[l,m], Q[j,j], Q[j,m], Q[m,m])   # student-student (lj)
-        ) 
+        expected_I3_network[j,l] -= one_over_sqrtp * a[m] * I3(Q[j,j], Q[j,l], Q[j,m], Q[l,l], Q[l,m], Q[m,m])
 
       for r in range(0,k):
-        expected_I3_network[j,l] += one_over_k * (
-          I3(Q[j,j], Q[j,l], M[j,r], Q[l,l], M[l,r], P[r,r]) + # student-teacher (jl)
-          I3(Q[l,l], Q[l,j], M[l,r], Q[j,j], M[j,r], P[r,r])   # student-teacher (lj)
-        )
-
+        expected_I3_network[j,l] += one_over_k * I3(Q[j,j], Q[j,l], M[j,r], Q[l,l], M[l,r], P[r,r]) 
 
       ## Noise term
       expected_I4[j,l] += noise * I2_noise(Q[j,j], Q[j,l], Q[l,l])
@@ -89,11 +79,6 @@ cpdef erf_updates(np.ndarray[DTYPE_t, ndim=2] Q, np.ndarray[DTYPE_t, ndim=2] M, 
       for r in range(0,k):
         for s in range(0,k):
           expected_I4[j,l] += square(one_over_k) * I4(Q[j,j], Q[j,l], M[j,r], M[j,s], Q[l,l], M[l,r], M[l,s], P[r,r], P[r,s], P[s,s])
-
-      ## Symmetrize Q
-      if j != l:
-        expected_I4[l,j] = expected_I4[j,l]
-        expected_I3_network[l,j] = expected_I3_network[j,l]
 
   return expected_I3_target, expected_I3_network, expected_I4
 

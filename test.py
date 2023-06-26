@@ -15,7 +15,7 @@ T = 1
 gamma0 = 1.
 noise = 0.
 alpha = 0.
-mc_sampleses = np.logspace(2 ,6 , base = 10 , num = 6, dtype=int)
+mc_sampleses = np.logspace(2 ,7 , base = 10 , num = 7, dtype=int)
 second_layer_update = False
 activation = lambda x: erf(x/np.sqrt(2))
 activation_derivative = lambda x: np.sqrt(2/np.pi) * np.exp(-x**2/2)
