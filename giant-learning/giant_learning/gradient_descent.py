@@ -25,12 +25,6 @@ class GradientDescent(GiantStepBase):
                 self.test_size = self.n
             self.test_size = test_size
             self.zs_test, self.ys_test = self.samples(self.test_size)
-        ##########
-        self.eq5 = []
-        self.eq6 = []
-        self.eq7 = []
-        self.zs_special, self.ys_special = self.samples(self.n)
-        ##########
         self.measure()
 
     def samples(self, size):
@@ -53,13 +47,8 @@ class GradientDescent(GiantStepBase):
         return self.W_s[-1]
 
     def update(self, zs, ys):
-        ##########
-        self.eq5.append(self.equation5(self.zs_special, self.ys_special))
-        self.eq6.append(self.equation6(self.zs_special, self.ys_special))
-        self.eq7.append(self.equation7(self.zs_special, self.ys_special))
-        ##########
         displacements = np.apply_along_axis(self.target, -1, zs @ self.W_target.T) + np.sqrt(self.noise)*np.random.normal(size=(self.n,)) - np.apply_along_axis(self.network, -1, zs @ self.W.T)
-        
+
         self.W_s.append(
             self.W + self.gamma0 * np.sqrt(self.p) * np.power(self.d,((self.l-1)/2))* 1/self.n * np.einsum('j,uj,u,ui->ji',self.a,self.activation_derivative(zs @ self.W.T),displacements,zs)
         )
@@ -78,28 +67,3 @@ class GradientDescent(GiantStepBase):
             zs, ys = self.samples(self.n)
             self.update(zs, ys)
             self.measure()
-
-#################################################
-
-    def equation7(self, zs, ys):
-        displacement = ys - np.apply_along_axis(self.network, -1, zs @ self.W.T)
-        return self.gamma0**2 * self.p * self.d**(self.l-1) * (
-            1 / self.n**2 * np.einsum('j,l,uj,vl,ui,vi,u,v->jl', self.a, self.a, self.activation_derivative(zs @ self.W.T), self.activation_derivative(zs @ self.W.T),zs,zs,displacement,displacement)
-        )
-    
-    def equation6(self, zs, ys):
-        displacement = ys - np.apply_along_axis(self.network, -1, zs @ self.W.T)
-        return self.gamma0 * np.sqrt(self.p) * self.d**((self.l-1)/2) * (
-            1/self.n * (
-                np.einsum('j,uj,ul,u->jl', self.a, self.activation_derivative(zs @ self.W.T), zs @ self.W.T, displacement) +
-                np.einsum('l,ul,uj,u->jl', self.a, self.activation_derivative(zs @ self.W.T), zs @ self.W.T, displacement)
-            )
-        )
-    
-    def equation5(self, zs, ys):
-        displacement = ys - np.apply_along_axis(self.network, -1, zs @ self.W.T)
-        return self.gamma0 * np.sqrt(self.p) * self.d**((self.l-1)/2) * (
-            1/self.n * np.einsum('j,uj,ul,u->jl', self.a, self.activation_derivative(zs @ self.W.T), zs @ self.W_target.T, displacement)
-        )
-
-    

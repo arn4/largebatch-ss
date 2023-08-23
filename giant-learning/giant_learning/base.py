@@ -42,11 +42,6 @@ class OverlapsBase(GiantStepBase):
         self.Qs = [Q0]
         self.P = P
         self.inverse_P = inverse_matrix(P)
-        ###########
-        self.eq5 = []
-        self.eq6 = []
-        self.eq7 = []
-        ###########
 
     @property
     def M(self):
@@ -77,24 +72,4 @@ class OverlapsBase(GiantStepBase):
                 np.einsum('jm,mn,ln->jl', expected_value_orthogonal, inverse_Qbot, expected_value_orthogonal)
             ) + self.gamma0**2 * self.p * np.einsum('j,l->jl', self.a, self.a) * expected_I4 
         )
-
-        ##############
-        self.eq5.append(
-            self.gamma0 * np.sqrt(self.p) * np.power(self.d, (self.l-1)/2) * np.einsum('j,jr->jr', self.a, expected_value_target)
-        )
-        self.eq6.append(
-            self.gamma0 * np.sqrt(self.p) * np.power(self.d, (self.l-1)/2) * (
-                np.einsum('j,jl->jl', self.a, expected_value_network) +
-                np.einsum('l,lj->jl', self.a, expected_value_network)
-            )
-        )
-        self.eq7.append(
-            self.gamma0**2 * self.p * np.power(self.d, (self.l-1)) * np.einsum('j,l->jl', self.a, self.a) * (
-                np.einsum('jr,rt,lt->jl', expected_value_target, self.inverse_P, expected_value_target) +
-                np.einsum('jm,mn,ln->jl', expected_value_orthogonal, inverse_Qbot, expected_value_orthogonal)
-            )
-            +
-             self.gamma0**2 * self.p * np.einsum('j,l->jl', self.a, self.a) * expected_I4
-        )
-        ##############
 

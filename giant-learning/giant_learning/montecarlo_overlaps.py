@@ -70,9 +70,9 @@ class MonteCarloOverlaps(OverlapsBase):
         return self.local_fields_montecarlo((local_field_term_target, local_field_term_network, local_field_I4)) 
 
     def measure(self):
-        ###############
+        #############
         return
-        ###############
+        #############
         def local_field_error(network_field, target_field, noise_randomness):
             return .5*(self.target(target_field)+np.sqrt(self.noise)*noise_randomness-self.network(network_field))**2
         
