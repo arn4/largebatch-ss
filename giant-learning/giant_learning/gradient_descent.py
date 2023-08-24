@@ -10,6 +10,7 @@ class GradientDescent(GiantStepBase):
                  activation: callable, W0: np.array, a0: np.array, activation_derivative: callable,
                  gamma0: float, l: int, noise: float,
                  second_layer_update: bool, alpha: float,
+                 resampling: bool = True,
                  seed: int = 0, test_size = None,
                  analytical_error = None):
         super().__init__(target, W0.shape[0], W_target.shape[0], activation, a0, activation_derivative, gamma0, W0.shape[1], l, noise, second_layer_update, alpha)
@@ -18,6 +19,10 @@ class GradientDescent(GiantStepBase):
 
         self.W_target = W_target
         self.W_s = [W0]
+
+        self.resampling = resampling
+        if not resampling:
+            self.fixed_zs, self.fixed_ys = self.samples(self.n)
 
         self.analytical_error = analytical_error
         if self.analytical_error is None:
@@ -64,6 +69,9 @@ class GradientDescent(GiantStepBase):
 
     def train(self, steps):
         for step in range(steps):
-            zs, ys = self.samples(self.n)
-            self.update(zs, ys)
+            if self.resampling:
+                zs, ys = self.samples(self.n)
+                self.update(zs, ys)
+            else:
+                self.update(self.fixed_zs, self.fixed_ys)
             self.measure()
