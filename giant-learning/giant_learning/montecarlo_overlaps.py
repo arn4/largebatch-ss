@@ -35,6 +35,7 @@ class MonteCarloOverlaps(OverlapsBase):
             target_local_field = local_fields[self.p:]
             return [f(network_local_field, target_local_field, noise_randomness) for f in fs]
         datas = [compute_samples(local_fields, noise_randomness) for local_fields, noise_randomness in tqdm(zip(local_fields_samples, noise_randomness_samples), total=self.mc_size)]
+    
         datas = list(zip(*datas))
         datas = [np.array(data) for data in datas]
         if std:
