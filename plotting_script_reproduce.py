@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
-def twoDplot_at(t):
+def twoDplot_at(t, show = 1, save = 0):
     # ion on the planes xy and xz
     fig, ax = plt.subplots(1,2)
     ax[0].scatter(
@@ -28,8 +29,12 @@ def twoDplot_at(t):
 
     ax[0].legend()
     ax[1].legend()
-
-    plt.show()
+    if save:
+        path =  f"./results/figures/new_fig1_giant_step/tkn={target_tkn}_choice2={choice_2layer}"
+        os.makedirs(path, exist_ok=True) 
+        fig.savefig(f'{path}/2dim_plot_d={d}_T={t}',bbox_inches='tight')
+    if show:
+        plt.show()
 
 def riskplot():
     # plot risk of GD and MC and GD no resample
@@ -42,7 +47,7 @@ def riskplot():
     ax.legend()
     plt.show()
 
-def threeDplot_at(t):
+def threeDplot_at(t, show = 1, save = 0):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     # plot the unit sphere
@@ -63,22 +68,25 @@ def threeDplot_at(t):
     )
 
     ax.legend()
+    if save:
+        path =  f"./results/figures/new_fig1_giant_step/tkn={target_tkn}_choice2={choice_2layer}"
+        os.makedirs(path, exist_ok=True) 
+        fig.savefig(f'{path}/3dim_plot_d={d}_T={t}',bbox_inches='tight')
+    if show:
+        plt.show()
+    
 
-    plt.show()
-
-
-second_layers = {'gaussian': 1/np.sqrt(p)*np.random.randn(p) , 'hypercube': np.sign(np.random.normal(size=(p,))) /np.sqrt(p) , 'ones': np.ones(p)/np.sqrt(p)}
 tkns = ['111','120','100']
 ds = [1000,2000,4000] 
 choices = ['gaussian', 'hypercube', 'ones']
 T = 3
-for d in ds: 
-    for target_tkn in tkns:
-        for choice_2layer in choices:
-            data = np.load(f'./results_reproduce/data_d={d}_tkn={target_tkn}_choice2={choice_2layer}.npz', allow_pickle=True)
-            similarity_simulation = data['arr_0'].item() 
+for target_tkn in tkns:
+    for choice_2layer in choices:
+        for d in ds:
+            data = np.load(f'./results/data/new_fig1_giant_step/data_d={d}_tkn={target_tkn}_choice2={choice_2layer}.npz', allow_pickle=True)
+            similarity_simulation = data['arr_0']
             for t in range(T):
-                twoDplot_at(t)
-                threeDplot_at(t)
+                twoDplot_at(t, show = 0, save = 1)
+                threeDplot_at(t, show = 0, save = 1)
 
 

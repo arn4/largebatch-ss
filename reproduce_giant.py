@@ -19,11 +19,12 @@ def target(lft):
     if target_tkn == '100':
         return lft[...,0]/3 + 2*lft[...,0]*H_2(lft[...,1]) + lft[...,1]*lft[...,2]
 
-second_layers = {'gaussian': 1/np.sqrt(p)*np.random.randn(p) , 'hypercube': np.sign(np.random.normal(size=(p,))) /np.sqrt(p) , 'ones': np.ones(p)/np.sqrt(p)}
+second_layers = {'gaussian': 1/np.sqrt(p)*np.random.randn(p) , 'hypercube': np.sign(np.random.normal(size=(p,))) /np.sqrt(p) , 'ones': np.ones(p)/np.sqrt(p),
+'2var': np.sqrt(2/p)*np.random.randn(p), '4var': np.sqrt(4/p)*np.random.randn(p), '8var': np.sqrt(8/p)*np.random.randn(p) }
 
 tkns = ['111','120','100']
-ds = [1000,2000,4000] 
-choices = ['gaussian', 'hypercube', 'ones']
+ds = [4000,8000] 
+choices = ['gaussian', 'hypercube', 'ones', '2var','4var','8var']
 for d in ds: 
     for target_tkn in tkns:
         for choice_2layer in choices:
@@ -69,6 +70,6 @@ for d in ds:
 
             t1_stop = perf_counter_ns()
             print("Elapsed time:", (t1_stop - t1_start)*1e-9, 's')
-            np.savez(f'./results_reproduce/data_d={d}_tkn={target_tkn}_choice2={choice_2layer}.npz',similarity_simulation)
-
-            
+            path =  f"./results_cluster/data/new_fig1_giant_step/tkn={target_tkn}_choice2={choice_2layer}"
+            os.makedirs(path, exist_ok=True) 
+            np.savez(f'{path}/d={d}.npz',similarity_simulation)
