@@ -76,14 +76,14 @@ def threeDplot_at(t, show = 1, save = 0):
         plt.show()
     
 
-tkns = ['111','120','100']
-ds = [1000,2000,4000] 
-choices = ['gaussian', 'hypercube', 'ones']
+tkns = ['111']
+ds = [2000] 
+choices = ['8var']
 T = 3
 for target_tkn in tkns:
     for choice_2layer in choices:
         for d in ds:
-            data = np.load(f'./results/data/new_fig1_giant_step/data_d={d}_tkn={target_tkn}_choice2={choice_2layer}.npz', allow_pickle=True)
+            data = np.load(f'./results/data/new_fig1_giant_step/tkn={target_tkn}_choice2={choice_2layer}/d={d}.npz', allow_pickle=True)
             similarity_simulation = data['arr_0']
             for t in range(T):
                 twoDplot_at(t, show = 0, save = 1)
