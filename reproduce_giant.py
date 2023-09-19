@@ -6,7 +6,7 @@ from sklearn.preprocessing import normalize
 from scipy.linalg import orth
 import matplotlib.pyplot as plt
 from time import perf_counter_ns
-
+import os 
 alpha = 0. ; noise = 0.
 
 k = 3 ; gamma0 = 4 ; T = 3 ; mc_samples = 100000 ; p = 100
@@ -23,7 +23,7 @@ second_layers = {'gaussian': 1/np.sqrt(p)*np.random.randn(p) , 'hypercube': np.s
 '2var': np.sqrt(2/p)*np.random.randn(p), '4var': np.sqrt(4/p)*np.random.randn(p), '8var': np.sqrt(8/p)*np.random.randn(p) }
 
 tkns = ['111','120','100']
-ds = [4000,8000] 
+ds = [1000,2000] 
 choices = ['gaussian', 'hypercube', 'ones', '2var','4var','8var']
 for d in ds: 
     for target_tkn in tkns:
