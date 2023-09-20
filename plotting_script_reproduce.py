@@ -77,8 +77,8 @@ def threeDplot_at(t, show = 1, save = 0):
     
 
 tkns = ['111']
-ds = [2000] 
-choices = ['8var']
+ds = [8000] 
+choices = ['hypercube']
 T = 3
 for target_tkn in tkns:
     for choice_2layer in choices:
@@ -86,7 +86,7 @@ for target_tkn in tkns:
             data = np.load(f'./results/data/new_fig1_giant_step/tkn={target_tkn}_choice2={choice_2layer}/d={d}.npz', allow_pickle=True)
             similarity_simulation = data['arr_0']
             for t in range(T):
-                twoDplot_at(t, show = 0, save = 1)
-                threeDplot_at(t, show = 0, save = 1)
+                twoDplot_at(t, show = 1, save = 1)
+                threeDplot_at(t, show = 1, save = 1)
 
 
