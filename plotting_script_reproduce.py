@@ -4,7 +4,7 @@ import os
 
 def twoDplot_at(t, show = 1, save = 0):
     # ion on the planes xy and xz
-    fig, ax = plt.subplots(1,2)
+    fig, ax = plt.subplots(1,2, figsize = (6,3))
     ax[0].scatter(
         similarity_simulation[t,:,0],
         similarity_simulation[t,:,1],
@@ -76,9 +76,9 @@ def threeDplot_at(t, show = 1, save = 0):
         plt.show()
     
 
-tkns = ['111']
-ds = [8000] 
-choices = ['hypercube']
+tkns = ['111','120','100','000']
+ds = [2000,4000,8000] 
+choices = ['gaussian', 'hypercube']
 T = 3
 for target_tkn in tkns:
     for choice_2layer in choices:
@@ -86,7 +86,7 @@ for target_tkn in tkns:
             data = np.load(f'./results/data/new_fig1_giant_step/tkn={target_tkn}_choice2={choice_2layer}/d={d}.npz', allow_pickle=True)
             similarity_simulation = data['arr_0']
             for t in range(T):
-                twoDplot_at(t, show = 1, save = 1)
-                threeDplot_at(t, show = 1, save = 1)
+                twoDplot_at(t, show = 0, save = 1)
+                threeDplot_at(t, show = 0, save = 1)
 
 
