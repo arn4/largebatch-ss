@@ -20,15 +20,15 @@ def target(lft):
     elif target_tkn == '100':
         return lft[...,0]/3 + 2*H_2(lft[...,0])*H_2(lft[...,1]) + lft[...,1]*lft[...,2]
     elif target_tkn == '000':
-        return H_3(lft[...,0]/3) + 2*H_2(lft[...,0])*H_3(lft[...,1]) + lft[...,1]*lft[...,2]
+        return H_2(lft[...,2])*H_3(lft[...,0]/3) + 2*H_2(lft[...,0])*H_3(lft[...,1]) + lft[...,1]*lft[...,2]
     
 
 second_layers = {'gaussian': 1/np.sqrt(p)*np.random.randn(p) , 'hypercube': np.sign(np.random.normal(size=(p,))) /np.sqrt(p) , 'ones': np.ones(p)/np.sqrt(p),
 '2var': np.sqrt(2/p)*np.random.randn(p), '4var': np.sqrt(4/p)*np.random.randn(p), '8var': np.sqrt(8/p)*np.random.randn(p), 'uniform': np.random.uniform(-np.sqrt(12),np.sqrt(12),size=(p,)) }
 
-tkns = ['111','120','100','000']
-ds = [2000,4000,8000] 
-choices = ['gaussian']
+tkns = ['000']
+ds = [4000,8000] 
+choices = ['hypercube', 'gaussian']
 for d in ds: 
     for target_tkn in tkns:
         for choice_2layer in choices:
