@@ -13,24 +13,12 @@ H2 = lambda z: z**2 - 1
 
 def target(lft):
     return np.mean(H2(lft))
-def riskplot():
-    # plot risk of GD and MC and GD no resample
-    fig, ax = plt.subplots(1,1)
-    ax.plot(np.arange(T+1), simulation.test_errors, label='GD', marker='o', color='orange')
-    ax.plot(np.arange(T+1), simulation_noresample.test_errors, label='GD no resample', marker='o', color='green')
-    ax.plot(np.arange(T+1), montecarlo.test_errors, label='MC', marker='o', color='blue')
-    ax.set_xlabel('t') 
-    ax.set_ylabel('Test Risk')
-    ax.legend()
-    plt.show()
-
-
-ds = np.logspace(4,5,num = 2, base = 2, dtype = int) 
+ds = np.logspace(8,11,num = 4, base = 2, dtype = int) 
 error_simus = [] 
 error_simus_noresample = []
 error_montecarlos = []
 xaxiss = []
-path =  f"./results_cluster/data/info_exponent/"
+path =  f"./results_cluster/data/info_exponent"
 for d in ds:
     t1_start = perf_counter_ns()
     print(f'START d = {d}')
@@ -82,11 +70,11 @@ for d in ds:
     error_simus_noresample.append(simulation_noresample.test_errors)
     error_montecarlos.append(montecarlo.test_errors)
     
-    os.makedirs(path, exist_ok=True) 
     t1_stop = perf_counter_ns()
     print(f"Elapsed time for d={d}:", (t1_stop - t1_start)*1e-9, 's')
 
-np.savez(f'{path}/xaxis.npz', np.array(xaxis, dtype=object), allow_pickle = True)
+os.makedirs(path, exist_ok=True)
+np.savez(f'{path}/xaxiss.npz', np.array(xaxiss, dtype=object), allow_pickle = True)
 np.savez(f'{path}/ds.npz', np.array(ds, dtype=object), allow_pickle = True)
 np.savez(f'{path}/error_simus.npz', np.array(error_simus, dtype=object), allow_pickle = True)
 np.savez(f'{path}/error_simus_noresample.npz', np.array(error_simus_noresample, dtype=object), allow_pickle = True)
