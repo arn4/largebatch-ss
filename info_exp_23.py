@@ -14,7 +14,7 @@ H3 = lambda z: z**3 - 3*z
 def target(lft):
     return np.mean(H3(lft))
 
-ds = np.logspace(5,7,num = 3, base = 2, dtype = int) 
+ds = np.logspace(5,6,num = 4, base = 2, dtype = int) 
 error_simus = [] 
 error_simus_noresample = []
 error_montecarlos = []
