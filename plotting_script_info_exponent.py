@@ -7,9 +7,9 @@ import os
 def ensemble_plot(show = 1, save = 0):
     fig, ax = plt.subplots(1,3, figsize = (15,5), sharey = True)
     for i,d in enumerate(ds):
-        ax[0].plot(xaxiss[i], error_simus[i], label=f'd={d}', marker='o')
-        ax[1].plot(xaxiss[i], error_montecarlos[i], label=f'd={d} MC', marker='o')
-        ax[2].plot(xaxiss[i], error_simus_noresample[i], label=f'd={d} no resample', marker='o')
+        ax[0].plot(xaxiss[i], error_simus[i], label=f'GD simulation d={d}', marker='o')
+        ax[1].plot(xaxiss[i], error_montecarlos[i], label=f'MC approximation d={d}', marker='o')
+        ax[2].plot(xaxiss[i], error_simus_noresample[i], label=f'GD no resample d={d}', marker='o')
     ax[0].set_xlabel('t / log(d)')
     ax[0].set_ylabel('Test Risk')
     ax[1].set_xlabel('t / log(d)')
