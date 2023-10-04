@@ -14,7 +14,7 @@ H3 = lambda z: z**3 - 3*z
 def target(lft):
     return np.mean(H3(lft))
 
-ds = np.logspace(8,13,num = 6, base = 2, dtype = int) 
+ds = np.logspace(8,11,num = 4, base = 2, dtype = int) 
 error_simus = [] 
 error_simus_noresample = []
 error_montecarlos = []
@@ -59,8 +59,6 @@ for d in ds:
             test_size=mc_samples
         )
         
-        simulation.train(T)
-        simulation_noresample.train(T)
 
         montecarlo = MonteCarloOverlaps(
             target, activation, activation_derivative,
@@ -70,10 +68,33 @@ for d in ds:
             mc_size = mc_samples
         )
 
+        # train #
         montecarlo.train(T)
-        store_error_simus.append(simulation.test_errors)
-        store_error_simus_noresample.append(simulation_noresample.test_errors)
-        store_error_montecarlos.append(montecarlo.test_errors)
+        simulation.train(T)
+        simulation_noresample.train(T)
+
+        # compute and store magnetizations # 
+
+        Ws = np.array(simulation.W_s)
+        Ws_noresample = np.array(simulation_noresample.W_s)
+        Ms_simulation = np.einsum('tji,ri->tjr', Ws, Wtarget)
+        Qs_simulation = np.einsum('tji,tlk->tjl', Ws, Ws)
+        Ms_simulation_noresample = np.einsum('tji,ri->tjr', Ws_noresample, Wtarget)
+        Qs_simulation_noresample = np.einsum('tji,tlk->tjl', Ws_noresample, Ws_noresample)
+        Ms_montecarlo = np.array(montecarlo.Ms)
+        Qs_montecarlo = np.array(montecarlo.Qs)
+
+        Wupdates = Ws[1:] - Ws[:-1]
+        Wupdates_noresample = Ws_noresample[1:] - Ws_noresample[:-1]
+
+        Mupdates_simulation = Wupdates @ Wtarget.T
+        Mupdates_simulation_noresample = Wupdates_noresample @ Wtarget.T        
+        Mupdates_montercalo = Ms_montecarlo[1:] - Ms_montecarlo[:-1]
+         
+        store_error_simus.append(Mupdates_simulation)
+        store_error_simus_noresample.append(Mupdates_simulation_noresample)
+        store_error_montecarlos.append(Mupdates_montercalo)
+        
 
 
     # get mean and std of the errors over the 10 seeds
