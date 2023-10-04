@@ -8,13 +8,13 @@ from time import perf_counter_ns
 import os 
 
 alpha = 0. ; noise = 0.
-k = 1 ; gamma0 = 1 ; mc_samples = 10000 ; p = 1
+k = 1 ; gamma0 = 1 ; mc_samples = 10 ; p = 1
 H2 = lambda z: z**2 - 1
 
 def target(lft):
     return np.mean(H2(lft))
 
-ds = np.logspace(8,11,num = 4, base = 2, dtype = int) 
+ds = np.logspace(8,13,num = 5, base = 2, dtype = int) 
 error_simus = [] 
 error_simus_noresample = []
 error_montecarlos = []
@@ -26,7 +26,7 @@ path =  f"./results_cluster/data/info_exp_12"
 for d in ds:
     t1_start = perf_counter_ns()
     print(f'START d = {d}')
-    T = 2*np.log2(d).astype(int)
+    T = 20*np.log2(d).astype(int)
     xaxis = np.arange(T+1) / np.log2(d).astype(int)
     xaxiss.append(xaxis)
     l = 1.15
@@ -36,7 +36,7 @@ for d in ds:
     store_error_simus = []
     store_error_simus_noresample = []
     store_error_montecarlos = []
-    for seed in range(5):
+    for seed in range(100):
         Wtarget = orth((normalize(np.random.normal(size=(k,d)), axis=1, norm='l2')).T).T
         W0 = 1/np.sqrt(d) * np.random.normal(size=(p,d))
         a0 = np.sign(np.random.normal(size=(p,))) /np.sqrt(p)
@@ -84,17 +84,10 @@ for d in ds:
         Ms_montecarlo = np.array(montecarlo.Ms)
         Qs_montecarlo = np.array(montecarlo.Qs)
 
-        Wupdates = Ws[1:] - Ws[:-1]
-        Wupdates_noresample = Ws_noresample[1:] - Ws_noresample[:-1]
-
-        Mupdates_simulation = Wupdates @ Wtarget.T
-        Mupdates_simulation_noresample = Wupdates_noresample @ Wtarget.T        
-        Mupdates_montercalo = Ms_montecarlo[1:] - Ms_montecarlo[:-1]
-         
-        store_error_simus.append(Mupdates_simulation)
-        store_error_simus_noresample.append(Mupdates_simulation_noresample)
-        store_error_montecarlos.append(Mupdates_montercalo)
-
+        # store the magnetizations 
+        store_error_simus.append(np.abs(Ms_simulation))
+        store_error_simus_noresample.append(np.abs(Ms_simulation_noresample))
+        store_error_montecarlos.append(np.abs(Ms_montecarlo))
 
     # get mean and std of the errors over the 10 seeds
     error_simus.append(np.mean(store_error_simus, axis = 0))
@@ -103,7 +96,6 @@ for d in ds:
     std_simus.append(np.std(store_error_simus, axis = 0))
     std_simus_noresample.append(np.std(store_error_simus_noresample, axis = 0))
     std_montecarlos.append(np.std(store_error_montecarlos, axis = 0))
-
 
     t1_stop = perf_counter_ns()
     print(f"Elapsed time for d={d}:", (t1_stop - t1_start)*1e-9, 's')

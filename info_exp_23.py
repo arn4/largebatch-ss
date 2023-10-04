@@ -26,7 +26,7 @@ path =  f"./results_cluster/data/info_exp_23"
 for d in ds:
     t1_start = perf_counter_ns()
     print(f'START d = {d}')
-    T = 2*d.astype(int)
+    T = 20*d.astype(int)
     xaxis = np.arange(T+1) / d
     xaxiss.append(xaxis)
     l = 2
@@ -36,7 +36,7 @@ for d in ds:
     store_error_simus = [] 
     store_error_simus_noresample = []
     store_error_montecarlos = []
-    for seed in range(5):
+    for seed in range(100):
         Wtarget = orth((normalize(np.random.normal(size=(k,d)), axis=1, norm='l2')).T).T
         W0 = 1/np.sqrt(d) * np.random.normal(size=(p,d))
         a0 = np.sign(np.random.normal(size=(p,))) /np.sqrt(p)
@@ -84,16 +84,10 @@ for d in ds:
         Ms_montecarlo = np.array(montecarlo.Ms)
         Qs_montecarlo = np.array(montecarlo.Qs)
 
-        Wupdates = Ws[1:] - Ws[:-1]
-        Wupdates_noresample = Ws_noresample[1:] - Ws_noresample[:-1]
-
-        Mupdates_simulation = Wupdates @ Wtarget.T
-        Mupdates_simulation_noresample = Wupdates_noresample @ Wtarget.T        
-        Mupdates_montercalo = Ms_montecarlo[1:] - Ms_montecarlo[:-1]
-         
-        store_error_simus.append(Mupdates_simulation)
-        store_error_simus_noresample.append(Mupdates_simulation_noresample)
-        store_error_montecarlos.append(Mupdates_montercalo)
+        # store the magnetizations 
+        store_error_simus.append(np.abs(Ms_simulation))
+        store_error_simus_noresample.append(np.abs(Ms_simulation_noresample))
+        store_error_montecarlos.append(np.abs(Ms_montecarlo))
 
         
 
