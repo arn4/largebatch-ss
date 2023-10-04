@@ -10,10 +10,12 @@ import os
 alpha = 0. ; noise = 0.
 k = 1 ; gamma0 = 1 ; mc_samples = 10 ; p = 1
 H2 = lambda z: z**2 - 1
-
+l = 1.15
+l_noresample = l
 def target(lft):
     return np.mean(H2(lft))
-
+activation = lambda x: np.maximum(x,0)
+activation_derivative = lambda x: (x>0).astype(float)
 ds = np.logspace(8,13,num = 5, base = 2, dtype = int) 
 error_simus = [] 
 error_simus_noresample = []
@@ -22,17 +24,16 @@ std_simus = []
 std_simus_noresample = []
 std_montecarlos = []
 xaxiss = []
-path =  f"./results_cluster/data/info_exp_12"
+folder_path =  f"./results_cluster/data/info_exp_12"
+hyper_path = f"/l={l}_noise={noise}_gamma0={gamma0}_activation=relu_p={p}"
+path = folder_path + hyper_path
 for d in ds:
     t1_start = perf_counter_ns()
     print(f'START d = {d}')
     T = 20*np.log2(d).astype(int)
     xaxis = np.arange(T+1) / np.log2(d).astype(int)
     xaxiss.append(xaxis)
-    l = 1.15
-    l_noresample = l
-    activation = lambda x: np.maximum(x,0)
-    activation_derivative = lambda x: (x>0).astype(float)
+    
     store_error_simus = []
     store_error_simus_noresample = []
     store_error_montecarlos = []

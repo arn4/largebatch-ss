@@ -22,7 +22,9 @@ std_simus = []
 std_simus_noresample = []
 std_montecarlos = []
 xaxiss = []
-path =  f"./results_cluster/data/info_exp_13"
+folder_path =  f"./results_cluster/data/info_exp_13"
+hyper_path = f"/l={l}_noise={noise}_gamma0={gamma0}_activation=relu_p={p}"
+path = folder_path + hyper_path
 for d in ds:
     t1_start = perf_counter_ns()
     print(f'START d = {d}')

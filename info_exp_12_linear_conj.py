@@ -8,13 +8,15 @@ from time import perf_counter_ns
 import os 
 
 alpha = 0. ; noise = 0.
-k = 1 ; gamma0 = 1 ; mc_samples = 10000 ; p = 1
+k = 1 ; gamma0 = 1 ; mc_samples = 10 ; p = 1
 H2 = lambda z: z**2 - 1
-H3 = lambda z: z**3 - 3*z
+l = 1.15
+l_noresample = l
 def target(lft):
-    return np.mean(H3(lft))
-
-ds = np.logspace(5,6,num = 4, base = 2, dtype = int) 
+    return np.mean(H2(lft))
+activation = lambda x: np.maximum(x,0)
+activation_derivative = lambda x: (x>0).astype(float)
+ds = np.logspace(8,13,num = 5, base = 2, dtype = int) 
 error_simus = [] 
 error_simus_noresample = []
 error_montecarlos = []
@@ -22,7 +24,7 @@ std_simus = []
 std_simus_noresample = []
 std_montecarlos = []
 xaxiss = []
-folder_path =  f"./results_cluster/data/info_exp_23"
+folder_path =  f"./results_cluster/data/info_exp_12_linear_conj"
 hyper_path = f"/l={l}_noise={noise}_gamma0={gamma0}_activation=relu_p={p}"
 path = folder_path + hyper_path
 for d in ds:
@@ -31,11 +33,7 @@ for d in ds:
     T = 20*d.astype(int)
     xaxis = np.arange(T+1) / d
     xaxiss.append(xaxis)
-    l = 2
-    l_noresample = l
-    activation = lambda x: np.maximum(x,0)
-    activation_derivative = lambda x: (x>0).astype(float)
-    store_error_simus = [] 
+    store_error_simus = []
     store_error_simus_noresample = []
     store_error_montecarlos = []
     for seed in range(100):
@@ -91,8 +89,6 @@ for d in ds:
         store_error_simus_noresample.append(np.abs(Ms_simulation_noresample))
         store_error_montecarlos.append(np.abs(Ms_montecarlo))
 
-        
-
     # get mean and std of the errors over the 10 seeds
     error_simus.append(np.mean(store_error_simus, axis = 0))
     error_simus_noresample.append(np.mean(store_error_simus_noresample, axis = 0))
@@ -100,7 +96,6 @@ for d in ds:
     std_simus.append(np.std(store_error_simus, axis = 0))
     std_simus_noresample.append(np.std(store_error_simus_noresample, axis = 0))
     std_montecarlos.append(np.std(store_error_montecarlos, axis = 0))
-
 
     t1_stop = perf_counter_ns()
     print(f"Elapsed time for d={d}:", (t1_stop - t1_start)*1e-9, 's')
@@ -114,7 +109,5 @@ np.savez(f'{path}/error_montecarlos.npz', np.array(error_montecarlos, dtype=obje
 np.savez(f'{path}/std_simus.npz', np.array(std_simus, dtype=object), allow_pickle = True)
 np.savez(f'{path}/std_simus_noresample.npz', np.array(std_simus_noresample, dtype=object), allow_pickle = True)
 np.savez(f'{path}/std_montecarlos.npz', np.array(std_montecarlos, dtype=object), allow_pickle = True)
-
-
 
 
