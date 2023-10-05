@@ -10,7 +10,7 @@ import os
 alpha = 0. 
 noise = 0.
 k = 1  
-gamma0 = 5
+gamma0 = 2
 H2 = lambda z: z**2 - 1
 mckey = False
 mc_samples = 10000
@@ -18,8 +18,12 @@ l = 1.2
 l_noresample = l
 def target(lft):
     return np.mean(H2(lft))
-activation = lambda x: np.maximum(x,0)
-activation_derivative = lambda x: (x>0).astype(float)
+activations = {"relu": lambda x: np.maximum(x,0), "h2": H2}
+activation_derivatives = {"relu": lambda x: (x>0).astype(float), "h2": lambda x: 2*x}
+act_tkn = "h2"
+act_derivative_tkn = "h2"
+activation = activations[act_tkn]
+activation_derivative = activation_derivatives[act_derivative_tkn]
 ds = np.logspace(7,9,num = 3, base = 2, dtype = int) 
 p = 1
 error_simus = [] 
@@ -30,9 +34,18 @@ std_simus_noresample = []
 std_montecarlos = []
 xaxiss = []
 folder_path =  f"./results_cluster/data/info_exp_12"
-for start in ["warm", "tiepide", "cold", "random"]:
-    hyper_path = f"/l={l}_noise={noise}_gamma0={gamma0}_activation=relu_p={p}_start={start}"
+starts = ["warm", "tiepide", "cold", "random"]
+for start in starts:
+    hyper_path = f"/l={l}_noise={noise}_gamma0={gamma0}_activation={act_tkn}_p={p}_start={start}"
     path = folder_path + hyper_path
+    if start == "warm":
+        t = 0.99
+    elif start == "tiepide":
+        t = 0.7
+    elif start == "cold":
+        t = 0.3
+    else:
+        t = 0
     for d in ds:
         t1_start = perf_counter_ns()
         print(f'{start} START d = {d}')
@@ -44,14 +57,6 @@ for start in ["warm", "tiepide", "cold", "random"]:
         store_error_montecarlos = []
         for seed in range(5):
             Wtarget = orth((normalize(np.random.normal(size=(k,d)), axis=1, norm='l2')).T).T
-            if start == "warm":
-                t = 0.99
-            elif start == "tiepide":
-                t = 0.7
-            elif start == "cold":
-                t = 0.3
-            else:
-                t = 0
             a0 = np.sign(np.random.normal(size=(p,))) /np.sqrt(p)
             W0 = t*Wtarget + np.sqrt(1-t**2)*1/np.sqrt(d) * np.random.normal(size=(p,d))
             simulation = GradientDescent(
@@ -118,7 +123,7 @@ for start in ["warm", "tiepide", "cold", "random"]:
         std_montecarlos.append(np.std(store_error_montecarlos, axis = 0))
 
         t1_stop = perf_counter_ns()
-        print(f"Elapsed time for d={d}:", (t1_stop - t1_start)*1e-9, 's')
+        print(f"elapsed time for d={d}:", (t1_stop - t1_start)*1e-9, 's')
 
     os.makedirs(path, exist_ok=True)
     np.savez(f'{path}/xaxiss.npz', np.array(xaxiss, dtype=object), allow_pickle = True)
