@@ -8,15 +8,18 @@ from time import perf_counter_ns
 import os 
 
 alpha = 0. ; noise = 0.
-k = 1 ; gamma0 = 1 ; mc_samples = 10 ; p = 1
+k = 1 ; gamma0 = 1 
 H2 = lambda z: z**2 - 1
-l = 1.15
+mckey = False
+mc_samples = 10000
+l = 1.1
 l_noresample = l
 def target(lft):
     return np.mean(H2(lft))
 activation = lambda x: np.maximum(x,0)
 activation_derivative = lambda x: (x>0).astype(float)
-ds = np.logspace(8,13,num = 5, base = 2, dtype = int) 
+ds = np.logspace(7,11,num = 5, base = 2, dtype = int) 
+p = 1
 error_simus = [] 
 error_simus_noresample = []
 error_montecarlos = []
@@ -37,7 +40,7 @@ for d in ds:
     store_error_simus = []
     store_error_simus_noresample = []
     store_error_montecarlos = []
-    for seed in range(100):
+    for seed in range(10):
         Wtarget = orth((normalize(np.random.normal(size=(k,d)), axis=1, norm='l2')).T).T
         W0 = 1/np.sqrt(d) * np.random.normal(size=(p,d))
         a0 = np.sign(np.random.normal(size=(p,))) /np.sqrt(p)
@@ -61,16 +64,8 @@ for d in ds:
         )
         
 
-        montecarlo = MonteCarloOverlaps(
-            target, activation, activation_derivative,
-            Wtarget @ Wtarget.T, W0 @ Wtarget.T, W0 @ W0.T, a0,
-            gamma0, d, l, noise,
-            False, alpha,
-            mc_size = mc_samples
-        )
 
         # train #
-        montecarlo.train(T)
         simulation.train(T)
         simulation_noresample.train(T)
 
@@ -82,8 +77,23 @@ for d in ds:
         Qs_simulation = np.einsum('tji,tlk->tjl', Ws, Ws)
         Ms_simulation_noresample = np.einsum('tji,ri->tjr', Ws_noresample, Wtarget)
         Qs_simulation_noresample = np.einsum('tji,tlk->tjl', Ws_noresample, Ws_noresample)
-        Ms_montecarlo = np.array(montecarlo.Ms)
-        Qs_montecarlo = np.array(montecarlo.Qs)
+
+        # mcmc
+        if mckey:
+           
+            montecarlo = MonteCarloOverlaps(
+                target, activation, activation_derivative,
+                Wtarget @ Wtarget.T, W0 @ Wtarget.T, W0 @ W0.T, a0,
+                gamma0, d, l, noise,
+                False, alpha,
+                mc_size = mc_samples
+            )
+            montecarlo.train(T)
+            Ms_montecarlo = np.array(montecarlo.Ms)
+            Qs_montecarlo = np.array(montecarlo.Qs)
+        else:
+            Ms_montecarlo = np.zeros((T+1, k, p))
+            Qs_montecarlo = np.zeros((T+1, k, k))
 
         # store the magnetizations 
         store_error_simus.append(np.abs(Ms_simulation))

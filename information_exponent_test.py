@@ -7,40 +7,56 @@ import matplotlib.pyplot as plt
 from time import perf_counter_ns
 import os 
 
-alpha = 0. ; noise = 0.
-k = 1 ; gamma0 = 1 ; p = 1
+experiment_tkns = ['12_log_conj', '12_linear_conj', '13','23']
+alpha = 0. 
+noise = 0.
+k = 1 
+gamma0 = 1 
 H2 = lambda z: z**2 - 1
 H3 = lambda z: z**3 - 3*z
 mckey = False
 mc_samples = 10000
-def target(lft):
-    return np.mean(H3(lft))
-
-ds = np.logspace(8,13,num = 5, base = 2, dtype = int) 
-error_simus = [] 
-error_simus_noresample = []
-error_montecarlos = []
-std_simus = []
-std_simus_noresample = []
-std_montecarlos = []
-xaxiss = []
-l = 1.15
-l_noresample = l
 activation = lambda x: np.maximum(x,0)
 activation_derivative = lambda x: (x>0).astype(float)
-folder_path =  f"./results_cluster/data/info_exp_13"
-hyper_path = f"/l={l}_noise={noise}_gamma0={gamma0}_activation=relu_p={p}"
-path = folder_path + hyper_path
+ds = np.logspace(8,13,num = 5, base = 2, dtype = int) 
+p = 1
+folder_path =  f"./results_cluster/data/info_exp"
 for d in ds:
     t1_start = perf_counter_ns()
     print(f'START d = {d}')
-    T = 20*d.astype(int)
-    xaxis = np.arange(T+1) / d
-    xaxiss.append(xaxis)
-    store_error_simus = [] 
+    if experiment_tkn == '12_log_conj':
+        l = 1.15
+        l_noresample = l
+        target = lambda lft: np.mean(H2(lft))
+        T = 20*np.log2(d).astype(int)
+        xaxis = np.arange(T+1) / np.log2(d).astype(int)
+    elif experiment_tkn == '12_linear_conj':
+        l = 1.15
+        l_noresample = l
+        target = lambda lft: np.mean(H2(lft))
+        T = 5*d.astype(int)
+        xaxis = np.arange(T+1) / d
+    elif experiment_tkn == '13':
+        l = 1.15
+        l_noresample = l
+        target = lambda lft: np.mean(H3(lft))
+        T = 5*d.astype(int)
+        xaxis = np.arange(T+1) / d
+    elif experiment_tkn == '23':
+        l = 2
+        l_noresample = l
+        target = lambda lft: np.mean(H3(lft))
+        T = 5*d.astype(int)
+        xaxis = np.arange(T+1) / d
+    # path to store the results
+    hyper_path = f"/tkn={experiment_tkn}_d={d}_l={l}"
+    path = folder_path + hyper_path
+    # list to get the results
+    store_error_simus = []
     store_error_simus_noresample = []
     store_error_montecarlos = []
     for seed in range(100):
+        print(f'START seed = {seed}')
         Wtarget = orth((normalize(np.random.normal(size=(k,d)), axis=1, norm='l2')).T).T
         W0 = 1/np.sqrt(d) * np.random.normal(size=(p,d))
         a0 = np.sign(np.random.normal(size=(p,))) /np.sqrt(p)
@@ -63,7 +79,6 @@ for d in ds:
             test_size=mc_samples
         )
         
-
         # train #
         simulation.train(T)
         simulation_noresample.train(T)
@@ -79,7 +94,6 @@ for d in ds:
 
         # mcmc
         if mckey:
-           
             montecarlo = MonteCarloOverlaps(
                 target, activation, activation_derivative,
                 Wtarget @ Wtarget.T, W0 @ Wtarget.T, W0 @ W0.T, a0,
@@ -99,30 +113,16 @@ for d in ds:
         store_error_simus_noresample.append(np.abs(Ms_simulation_noresample))
         store_error_montecarlos.append(np.abs(Ms_montecarlo))
 
-
-
-    # get mean and std of the errors over the 10 seeds
-    error_simus.append(np.mean(store_error_simus, axis = 0))
-    error_simus_noresample.append(np.mean(store_error_simus_noresample, axis = 0))
-    error_montecarlos.append(np.mean(store_error_montecarlos, axis = 0))
-    std_simus.append(np.std(store_error_simus, axis = 0))
-    std_simus_noresample.append(np.std(store_error_simus_noresample, axis = 0))
-    std_montecarlos.append(np.std(store_error_montecarlos, axis = 0))
-
-
+    # save the results with mean and std
+    os.makedirs(path, exist_ok=True)
+    np.savez(f'{path}/xaxis.npz', xaxis)
+    np.savez(f'{path}/error_simus.npz',np.mean(store_error_simus, axis = 0))
+    np.savez(f'{path}/error_simus_noresample.npz',np.mean(store_error_simus_noresample, axis = 0))
+    np.savez(f'{path}/error_montecarlos.npz',np.mean(store_error_montecarlos, axis = 0))
+    np.savez(f'{path}/std_simus.npz',np.std(store_error_simus, axis = 0))
+    np.savez(f'{path}/std_simus_noresample.npz',np.std(store_error_simus_noresample, axis = 0))
+    np.savez(f'{path}/std_montecarlos.npz',np.std(store_error_montecarlos, axis = 0))
     t1_stop = perf_counter_ns()
     print(f"Elapsed time for d={d}:", (t1_stop - t1_start)*1e-9, 's')
-
-os.makedirs(path, exist_ok=True)
-np.savez(f'{path}/xaxiss.npz', np.array(xaxiss, dtype=object), allow_pickle = True)
-np.savez(f'{path}/ds.npz', np.array(ds, dtype=object), allow_pickle = True)
-np.savez(f'{path}/error_simus.npz', np.array(error_simus, dtype=object), allow_pickle = True)
-np.savez(f'{path}/error_simus_noresample.npz', np.array(error_simus_noresample, dtype=object), allow_pickle = True)
-np.savez(f'{path}/error_montecarlos.npz', np.array(error_montecarlos, dtype=object), allow_pickle = True)
-np.savez(f'{path}/std_simus.npz', np.array(std_simus, dtype=object), allow_pickle = True)
-np.savez(f'{path}/std_simus_noresample.npz', np.array(std_simus_noresample, dtype=object), allow_pickle = True)
-np.savez(f'{path}/std_montecarlos.npz', np.array(std_montecarlos, dtype=object), allow_pickle = True)
-
-
 
 

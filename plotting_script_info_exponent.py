@@ -25,8 +25,10 @@ def ensemble_plot(show = 1, save = 0):
         plt.show()
 
 # load data # 
-
-data_path = './results/data/info_exp_12'
+l = 1.15 ; noise = 0. ; gamma0 = 1 ; p = 1
+folder_path =  f"./results/data/info_exp_12"
+hyper_path = f"/l={l}_noise={noise}_gamma0={gamma0}_activation=relu_p={p}"
+data_path = folder_path + hyper_path
 xaxiss = np.load(f'{data_path}/xaxiss.npz', allow_pickle=True)
 ds = np.load(f'{data_path}/ds.npz', allow_pickle=True)
 error_simus = np.load(f'{data_path}/error_simus.npz', allow_pickle=True)
