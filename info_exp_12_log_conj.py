@@ -12,13 +12,13 @@ k = 1 ; gamma0 = 1
 H2 = lambda z: z**2 - 1
 mckey = False
 mc_samples = 10000
-l = 1.15
+l = 1.2
 l_noresample = l
 def target(lft):
     return np.mean(H2(lft))
 activation = lambda x: np.maximum(x,0)
 activation_derivative = lambda x: (x>0).astype(float)
-ds = np.logspace(7,10,num = 4, base = 2, dtype = int) 
+ds = np.logspace(7,9,num = 3, base = 2, dtype = int) 
 p = 1
 error_simus = [] 
 error_simus_noresample = []
@@ -27,31 +27,31 @@ std_simus = []
 std_simus_noresample = []
 std_montecarlos = []
 xaxiss = []
-start = "warm"
+start = "tiepide"
 folder_path =  f"./results_cluster/data/info_exp_12"
 hyper_path = f"/l={l}_noise={noise}_gamma0={gamma0}_activation=relu_p={p}_start={start}"
 path = folder_path + hyper_path
 for d in ds:
     t1_start = perf_counter_ns()
-    print(f'{start} START d = {d} ')
+    print(f'{start} START d = {d}')
     T = 20*np.log2(d).astype(int)
     xaxis = np.arange(T+1) / np.log2(d).astype(int)
     xaxiss.append(xaxis)
     store_error_simus = []
     store_error_simus_noresample = []
     store_error_montecarlos = []
-    for seed in range(10):
+    for seed in range(5):
         Wtarget = orth((normalize(np.random.normal(size=(k,d)), axis=1, norm='l2')).T).T
         if start == "warm":
-            W0 = Wtarget + 1/np.sqrt(d) * np.random.normal(size=(p,d))
+            t = 0.99
         elif start == "tiepide":
-            W0 = 1e-2*Wtarget + 1/np.sqrt(d) * np.random.normal(size=(p,d))
+            t = 0.7
         elif start == "cold":
-            W0 = 1e-4*Wtarget + 1/np.sqrt(d) * np.random.normal(size=(p,d))
+            t = 0.3
         else:
-            W0 = 1/np.sqrt(d) * np.random.normal(size=(p,d))
+            t = 0
         a0 = np.sign(np.random.normal(size=(p,))) /np.sqrt(p)
-
+        W0 = t*Wtarget + np.sqrt(1-t**2)*1/np.sqrt(d) * np.random.normal(size=(p,d))
         simulation = GradientDescent(
             target = target, W_target = Wtarget,
             activation = activation, W0 = W0, a0 = a0, activation_derivative = activation_derivative,
