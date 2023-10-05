@@ -10,21 +10,20 @@ import os
 alpha = 0. 
 noise = 0.
 k = 1  
-gamma0 = 2
+gamma0 = 0.01
 H2 = lambda z: z**2 - 1
 mckey = False
 mc_samples = 10000
-l = 1.2
+l = 1
 l_noresample = l
 def target(lft):
     return np.mean(H2(lft))
 activations = {"relu": lambda x: np.maximum(x,0), "h2": H2}
 activation_derivatives = {"relu": lambda x: (x>0).astype(float), "h2": lambda x: 2*x}
 act_tkn = "h2"
-act_derivative_tkn = "h2"
 activation = activations[act_tkn]
-activation_derivative = activation_derivatives[act_derivative_tkn]
-ds = np.logspace(7,9,num = 3, base = 2, dtype = int) 
+activation_derivative = activation_derivatives[act_tkn]
+ds = np.logspace(8,11,num = 4, base = 2, dtype = int) 
 p = 1
 error_simus = [] 
 error_simus_noresample = []
@@ -55,7 +54,7 @@ for start in starts:
         store_error_simus = []
         store_error_simus_noresample = []
         store_error_montecarlos = []
-        for seed in range(5):
+        for seed in range(10):
             Wtarget = orth((normalize(np.random.normal(size=(k,d)), axis=1, norm='l2')).T).T
             a0 = np.sign(np.random.normal(size=(p,))) /np.sqrt(p)
             W0 = t*Wtarget + np.sqrt(1-t**2)*1/np.sqrt(d) * np.random.normal(size=(p,d))
@@ -94,7 +93,6 @@ for start in starts:
 
             # mcmc
             if mckey:
-            
                 montecarlo = MonteCarloOverlaps(
                     target, activation, activation_derivative,
                     Wtarget @ Wtarget.T, W0 @ Wtarget.T, W0 @ W0.T, a0,
@@ -121,7 +119,6 @@ for start in starts:
         std_simus.append(np.std(store_error_simus, axis = 0))
         std_simus_noresample.append(np.std(store_error_simus_noresample, axis = 0))
         std_montecarlos.append(np.std(store_error_montecarlos, axis = 0))
-
         t1_stop = perf_counter_ns()
         print(f"elapsed time for d={d}:", (t1_stop - t1_start)*1e-9, 's')
 
