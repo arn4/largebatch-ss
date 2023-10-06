@@ -23,10 +23,11 @@ activation_derivatives = {"relu": lambda x: (x>0).astype(float), "h2": lambda x:
 act_tkn = "h2"
 activation = activations[act_tkn]
 activation_derivative = activation_derivatives[act_tkn]
-ds = np.logspace(7,11,num = 4, base = 2, dtype = int) 
+ds = np.logspace(10,12,num = 3, base = 2, dtype = int) 
 p = 1
+nseeds = 500
 folder_path =  f"./results_cluster/data/info_exp_12"
-starts = ["cold", "tiepide", "warm"]
+starts = ["random", "warm", "tiepide", "cold"]
 for start in starts:
     error_simus = [] 
     error_simus_noresample = []
@@ -48,13 +49,13 @@ for start in starts:
     for d in ds:
         t1_start = perf_counter_ns()
         print(f'{start} START d = {d}')
-        T = 20*np.log2(d).astype(int)
+        T = 10*np.log2(d).astype(int)
         xaxis = np.arange(T+1) / np.log2(d).astype(int)
         xaxiss.append(xaxis)
         store_error_simus = []
         store_error_simus_noresample = []
         store_error_montecarlos = []
-        for seed in range(3):
+        for seed in range(nseeds):
             Wtarget = orth((normalize(np.random.normal(size=(k,d)), axis=1, norm='l2')).T).T
             a0 = np.sign(np.random.normal(size=(p,))) /np.sqrt(p)
             W0 = t*Wtarget + np.sqrt(1-t**2)*1/np.sqrt(d) * np.random.normal(size=(p,d))
@@ -117,14 +118,12 @@ for start in starts:
             store_error_simus_noresample.append(np.abs(similarity_simulation_noresample))
             ### temporary store whatever for mc ###
             store_error_montecarlos.append(np.abs(Ms_montecarlo))  
+            print(f'At seed {seed} for d = {d} the error is {np.mean(np.abs(similarity_simulation[-1]))}')
 
-        # get mean and std of the errors over the 10 seeds
-        error_simus.append(np.mean(store_error_simus, axis = 0))
-        error_simus_noresample.append(np.mean(store_error_simus_noresample, axis = 0))
-        error_montecarlos.append(np.mean(store_error_montecarlos, axis = 0))
-        std_simus.append(np.std(store_error_simus, axis = 0))
-        std_simus_noresample.append(np.std(store_error_simus_noresample, axis = 0))
-        std_montecarlos.append(np.std(store_error_montecarlos, axis = 0))
+        # save the different trajectories
+        error_simus.append(store_error_simus)
+        error_simus_noresample.append(store_error_simus_noresample)
+        error_montecarlos.append(store_error_montecarlos)
         t1_stop = perf_counter_ns()
         print(f"elapsed time for d={d}:", (t1_stop - t1_start)*1e-9, 's')
 
@@ -134,8 +133,6 @@ for start in starts:
     np.savez(f'{path}/error_simus.npz', np.array(error_simus, dtype=object), allow_pickle = True)
     np.savez(f'{path}/error_simus_noresample.npz', np.array(error_simus_noresample, dtype=object), allow_pickle = True)
     np.savez(f'{path}/error_montecarlos.npz', np.array(error_montecarlos, dtype=object), allow_pickle = True)
-    np.savez(f'{path}/std_simus.npz', np.array(std_simus, dtype=object), allow_pickle = True)
-    np.savez(f'{path}/std_simus_noresample.npz', np.array(std_simus_noresample, dtype=object), allow_pickle = True)
-    np.savez(f'{path}/std_montecarlos.npz', np.array(std_montecarlos, dtype=object), allow_pickle = True)
+
 
 
