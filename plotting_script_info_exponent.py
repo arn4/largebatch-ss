@@ -25,7 +25,7 @@ def ensemble_plot(show = 1, save = 0):
         plt.show()
 
 # load data # 
-l = 1.2 ; noise = 0. ; gamma0 = 1 ; p = 1
+l = 1.2 ; noise = 0. ; gamma0 = 0.01 ; p = 1
 H2 = lambda z: z**2 - 1
 activations = {"relu": lambda x: np.maximum(x,0), "h2": H2}
 activation_derivatives = {"relu": lambda x: (x>0).astype(float), "h2": lambda x: 2*x}
@@ -33,7 +33,7 @@ act_tkn = "h2"
 act_derivative_tkn = "h2"
 activation = activations[act_tkn]
 activation_derivative = activation_derivatives[act_derivative_tkn]
-starts = ["warm", "tiepide"]
+starts = ["tiepide"]
 for start in starts:
     folder_path =  f"./results_cluster/data/info_exp_12"
     hyper_path = f"/l={l}_noise={noise}_gamma0={gamma0}_activation={act_tkn}_p={p}_start={start}"

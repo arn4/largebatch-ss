@@ -10,7 +10,7 @@ import os
 alpha = 0. 
 noise = 0.
 k = 1  
-gamma0 = 0.05
+gamma0 = 0.01
 H2 = lambda z: z**2 - 1
 mckey = False
 mc_samples = 10000
@@ -25,16 +25,16 @@ activation = activations[act_tkn]
 activation_derivative = activation_derivatives[act_tkn]
 ds = np.logspace(8,11,num = 4, base = 2, dtype = int) 
 p = 1
-error_simus = [] 
-error_simus_noresample = []
-error_montecarlos = []
-std_simus = []
-std_simus_noresample = []
-std_montecarlos = []
-xaxiss = []
 folder_path =  f"./results_cluster/data/info_exp_12"
 starts = ["warm", "tiepide", "cold", "random"]
 for start in starts:
+    error_simus = [] 
+    error_simus_noresample = []
+    error_montecarlos = []
+    std_simus = []
+    std_simus_noresample = []
+    std_montecarlos = []
+    xaxiss = []
     hyper_path = f"/l={l}_noise={noise}_gamma0={gamma0}_activation={act_tkn}_p={p}_start={start}"
     path = folder_path + hyper_path
     if start == "warm":
