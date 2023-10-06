@@ -10,11 +10,11 @@ import os
 alpha = 0. 
 noise = 0.
 k = 1  
-gamma0 = 0.01
+gamma0 = 0.05
 H2 = lambda z: z**2 - 1
 mckey = False
 mc_samples = 10000
-l = 1
+l = 1.2
 l_noresample = l
 def target(lft):
     return np.mean(H2(lft))
