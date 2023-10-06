@@ -23,10 +23,10 @@ activation_derivatives = {"relu": lambda x: (x>0).astype(float), "h2": lambda x:
 act_tkn = "h2"
 activation = activations[act_tkn]
 activation_derivative = activation_derivatives[act_tkn]
-ds = np.logspace(8,11,num = 4, base = 2, dtype = int) 
+ds = np.logspace(5,8,num = 4, base = 2, dtype = int) 
 p = 1
 folder_path =  f"./results_cluster/data/info_exp_12"
-starts = ["random"]
+starts = ["cold", "tiepide", "warm", "random"]
 for start in starts:
     error_simus = [] 
     error_simus_noresample = []
@@ -54,7 +54,7 @@ for start in starts:
         store_error_simus = []
         store_error_simus_noresample = []
         store_error_montecarlos = []
-        for seed in range(10):
+        for seed in range(3):
             Wtarget = orth((normalize(np.random.normal(size=(k,d)), axis=1, norm='l2')).T).T
             a0 = np.sign(np.random.normal(size=(p,))) /np.sqrt(p)
             W0 = t*Wtarget + np.sqrt(1-t**2)*1/np.sqrt(d) * np.random.normal(size=(p,d))
@@ -76,22 +76,29 @@ for start in starts:
                 test_size=mc_samples
             )
             
-
-
             # train #
             simulation.train(T)
             simulation_noresample.train(T)
 
-            # compute and store magnetizations # 
-
+            # compute weights # 
             Ws = np.array(simulation.W_s)
             Ws_noresample = np.array(simulation_noresample.W_s)
-            Ms_simulation = np.einsum('tji,ri->tjr', Ws, Wtarget)
-            Qs_simulation = np.einsum('tji,tlk->tjl', Ws, Ws)
-            Ms_simulation_noresample = np.einsum('tji,ri->tjr', Ws_noresample, Wtarget)
-            Qs_simulation_noresample = np.einsum('tji,tlk->tjl', Ws_noresample, Ws_noresample)
 
-            # mcmc
+            # compute magnetizations #
+            Ms_simulation = np.einsum('tji,ri->tjr', Ws, Wtarget)
+            similarity_simulation = np.einsum(
+                'tjr,tj->tjr',
+                Ms_simulation,
+                1/np.sqrt(np.einsum('tji,tji->tj', Ws, Ws)),
+            )
+
+            Ms_simulation_noresample = np.einsum('tji,ri->tjr', Ws_noresample, Wtarget)
+            similarity_simulation_noresample = np.einsum(
+                'tjr,tj->tjr',
+                Ms_simulation_noresample,
+                1/np.sqrt(np.einsum('tji,tji->tj', Ws_noresample, Ws_noresample)),
+            )
+            ##### mcmc #####
             if mckey:
                 montecarlo = MonteCarloOverlaps(
                     target, activation, activation_derivative,
@@ -102,15 +109,14 @@ for start in starts:
                 )
                 montecarlo.train(T)
                 Ms_montecarlo = np.array(montecarlo.Ms)
-                Qs_montecarlo = np.array(montecarlo.Qs)
             else:
                 Ms_montecarlo = np.zeros((T+1, k, p))
-                Qs_montecarlo = np.zeros((T+1, k, k))
 
             # store the magnetizations 
-            store_error_simus.append(np.abs(Ms_simulation))
-            store_error_simus_noresample.append(np.abs(Ms_simulation_noresample))
-            store_error_montecarlos.append(np.abs(Ms_montecarlo))
+            store_error_simus.append(np.abs(similarity_simulation))
+            store_error_simus_noresample.append(np.abs(similarity_simulation_noresample))
+            ### temporary store whatever for mc ###
+            store_error_montecarlos.append(np.abs(Ms_montecarlo))  
 
         # get mean and std of the errors over the 10 seeds
         error_simus.append(np.mean(store_error_simus, axis = 0))
