@@ -23,10 +23,10 @@ activation_derivatives = {"relu": lambda x: (x>0).astype(float), "h2": lambda x:
 act_tkn = "h2"
 activation = activations[act_tkn]
 activation_derivative = activation_derivatives[act_tkn]
-ds = np.logspace(5,8,num = 4, base = 2, dtype = int) 
+ds = np.logspace(7,11,num = 4, base = 2, dtype = int) 
 p = 1
 folder_path =  f"./results_cluster/data/info_exp_12"
-starts = ["cold", "tiepide", "warm", "random"]
+starts = ["cold", "tiepide", "warm"]
 for start in starts:
     error_simus = [] 
     error_simus_noresample = []
