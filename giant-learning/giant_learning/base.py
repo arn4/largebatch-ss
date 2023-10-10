@@ -72,4 +72,3 @@ class OverlapsBase(GiantStepBase):
                 np.einsum('jm,mn,ln->jl', expected_value_orthogonal, inverse_Qbot, expected_value_orthogonal)
             ) + self.gamma0**2 * self.p * np.einsum('j,l->jl', self.a, self.a) * expected_I4 
         )
-

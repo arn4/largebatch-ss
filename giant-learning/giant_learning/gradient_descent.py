@@ -2,7 +2,7 @@ import numpy as np
 from numpy.linalg import inv as inverse_matrix
 
 from .base import GiantStepBase
-from .cython_erf_erf import erf_error
+# from .cython_erf_erf import erf_error
 
 class GradientDescent(GiantStepBase):
     def __init__(self,
@@ -39,7 +39,8 @@ class GradientDescent(GiantStepBase):
 
     def error(self, zs, ys):
         if self.analytical_error == 'erferf':
-            return erf_error(self.W @ self.W.T, self.W @ self.W_target.T, self.W_target @ self.W_target.T, self.a, self.noise)
+            # return erf_error(self.W @ self.W.T, self.W @ self.W_target.T, self.W_target @ self.W_target.T, self.a, self.noise)
+            return print('Some mistake in the import of .cython_erf_erf')
         else:
             if zs is None and ys is None:
                 zs, ys = self.zs_test, self.ys_test
