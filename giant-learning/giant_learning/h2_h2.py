@@ -4,7 +4,7 @@ from scipy.special import erf
 from .base import OverlapsBase
 from .cython_erf_erf import erf_updates, erf_error
 
-def _target(local_fields, a):
+def _target(local_fields):
     k = len(local_fields) 
     return 1/np.sqrt(k) * np.sum(local_fields**2-1,axis=-1)
 def _activation(x):
