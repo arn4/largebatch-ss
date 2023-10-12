@@ -1,5 +1,5 @@
 import giant_learning
-from giant_learning.h2_h2 import H2H2Overlaps
+from giant_learning.poly_poly import H2H2Overlaps
 from giant_learning.gradient_descent import GradientDescent
 
 import numpy as np
@@ -7,85 +7,69 @@ from sklearn.preprocessing import normalize
 from scipy.linalg import orth
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-
+import os 
 p = 1
 k = 1
-gamma0 = .01
-l = 1.15
+gamma0 = .1
+l = 1
+d = 2**8
 noise = 0.
-mc_samples = 100000
 alpha = 0.
-nseeds = 20
-target = giant_learning.h2_h2._target
-activation = giant_learning.h2_h2._activation
-activation_derivative = giant_learning.h2_h2._activation_derivative
+target = H2H2Overlaps._target
+activation = H2H2Overlaps._activation
+activation_derivative = H2H2Overlaps._activation_derivative
 a0 = np.ones(shape=(p,)) /np.sqrt(p)
-colors = ['blue', 'orange', 'green', 'red', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
-ds = np.logspace(10,12,num = 3, base = 2, dtype = int) 
-store_simulation = []
-store_analytical = []
-starts = ["tiepide", "cold", "random"]
-for start in starts:
-    if start == "tiepide":
-        t = 0.7
-    elif start == "cold":
-        t = 0.3
-    else:
-        t = 0
-    print(f'{start} START')
-    for d in ds:
-        print(f'd = {d}')
-        similarity_simulation = []
-        similarity_analytical = []
-        T = int(2*np.log(d))
-        for _ in tqdm(range(nseeds)):
-            print(f'seed = {_}')
-            Wtarget = orth((normalize(np.random.normal(size=(k,d)), axis=1, norm='l2')).T).T
-            Wtild = np.random.normal(size=(p,d)) / np.sqrt(d)
-            A =  normalize(Wtild - np.einsum('ji,ri,rh->jh', Wtild , Wtarget ,Wtarget))
-            W0 = t*Wtarget + np.sqrt(1-t**2)*A
+colors = []
+# generate palette with 30 different colors 
+for i in range(10):
+    for j in range(i+1):
+        colors.append(plt.cm.tab10(i))
 
-            simulation = GradientDescent(
-                target = target, W_target = Wtarget,
-                activation = activation, W0 = W0, a0 = a0, activation_derivative = activation_derivative,
-                gamma0 = gamma0, l = l, noise = noise,
-                second_layer_update= False, alpha=alpha,
-                resampling=True,
-                test_size=mc_samples
-            )
-            simulation.train(T)
-
-            analytical = H2H2Overlaps(
-                Wtarget @ Wtarget.T, W0 @ Wtarget.T, W0 @ W0.T, a0,
+m0s = np.logspace(-10,-1,num = 10, base = 10)
+T = 100
+threshold_value = 0.6
+similarity_analytical = []
+crossing_times = []
+norms = []
+for m0 in m0s:
+    M0 = np.array([[m0]])
+    Q0 = np.array([[1]])
+    P0 = np.array([[1]])
+    analytical = H2H2Overlaps(
+                P0, M0, Q0, a0,
                 gamma0, d, l, noise,
                 False, alpha,
             )
-            analytical.train(T)
+    analytical.train(T)
+    similarity = analytical.Ms / np.sqrt(np.einsum('tjj,rr->tjr', analytical.Qs, analytical.P))
+    similarity_analytical.append( similarity )
+    crossing_times.append(np.argmax(similarity > threshold_value))
+    norms.append(np.array(analytical.Qs))
+    print(f'm0 = {m0} - crossing time = {crossing_times[-1]}')
+fig, ax = plt.subplots(1,3, figsize = (15,5))
+for i,m0 in enumerate(m0s):
+    ax[0].plot(np.arange(T+1), abs(similarity_analytical[i][:,0,0]), label = f'm0 = {m0}', color = colors[i])
+    ax[2].plot(np.arange(T+1), norms[i][:,0,0], color = 'black', marker = 'o', linestyle = 'None')
+ax[1].plot(m0s, crossing_times, color = 'black', marker = 'o', linestyle = 'None')
+from scipy.optimize import curve_fit
+def func(x, a, b):
+    return a + b*np.log(x)
+popt, pcov = curve_fit(func, m0s, crossing_times)
+print(f'popt = {popt}')
+fit = func(m0s, *popt)
+ax[1].plot(m0s, fit, color = 'red', label = 'Best fit')
+# print the parameters of the fit
+print(f'fit = {fit}')
+# print the parameter fit in the legend 
+ax[1].plot([], [], ' ', label=f'fit = {popt}')
 
-            # compute magnetizations 
-            Ws = np.array(simulation.W_s)
-            Ms_simulation = np.einsum('tji,ri->tjr', Ws, Wtarget)
-            similarity_simulation.append(np.einsum(
-                'tjr,tj->tjr',
-                Ms_simulation,
-                1/np.sqrt(np.einsum('tji,tji->tj', Ws, Ws)),
-            ))
-            similarity_analytical.append( analytical.Ms / np.sqrt(np.einsum('tjj,rr->tjr', analytical.Qs, analytical.P)) )
-        store_simulation.append(similarity_simulation)
-        store_analytical.append(similarity_analytical)
-
-    ### save data in results cluster folder 
-    path = f"./results_cluster/h2_h2/start={start}"
-    os.makedirs(path, exist_ok=True)
-    np.save(f'{path}/store_simulation.npy', store_simulation)
-    np.save(f'{path}/store_analytical.npy', store_analytical)
-    np.save(f'{path}/ds.npy', ds)
-    np.save(f'{path}/nseeds.npy', nseeds)
-
-
-
-
-
-
-
-
+ax[0].set_xlabel('t')
+ax[0].set_ylabel('Overlap')
+# ax[0].legend()
+ax[1].set_xlabel('m0')
+ax[1].set_ylabel('Crossing time')
+ax[1].set_xscale('log')
+ax[2].set_xlabel('t')
+ax[2].set_ylabel('Q')
+ax[1].legend()
+plt.show()
