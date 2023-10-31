@@ -25,9 +25,9 @@ def twoDplot_at(t, show = 1, save = 0):
     circle00 = plt.Circle((0, 0), 1, color='black', fill=False)
     circle10 = plt.Circle((0, 0), 1, color='black', fill=False)
     
-    ax[0].set_ylabel(r'$cos(G^{p}_i,w^*_2)$', fontsize = 40)
-    ax[0].set_xlabel(r'$cos(G^{p}_i,w^*_1)$', fontsize = 40)
-    ax[1].set_xlabel(r'$cos(G^{p}_i,w^*_3)$', fontsize = 40)
+    ax[0].set_ylabel(r'$cos(G^{p}_i,w^*_2)$', fontsize = 10)
+    ax[0].set_xlabel(r'$cos(G^{p}_i,w^*_1)$', fontsize = 10)
+    ax[1].set_xlabel(r'$cos(G^{p}_i,w^*_3)$', fontsize = 10)
     # ax[1].set_ylabel(r'$cos(G^{\perp}_i,e_3)$', fontsize = 10)
 
     ax[0].add_artist(circle00)
@@ -82,17 +82,17 @@ def threeDplot_at(show = 1, save = 0):
         plt.show()
     
 colors = ['darkgreen', 'lime', 'olive']
-tkns = ['120']
-ds = [8000] 
+tkns = ['111']
+ds = [10] 
 choices = ['hypercube']
-T = 2
+T = 3
 for target_tkn in tkns:
     for choice_2layer in choices:
         for d in ds:
-            data = np.load(f'./results/data/new_fig1_giant_step/tkn={target_tkn}_choice2={choice_2layer}/d={d}.npz', allow_pickle=True)
+            data = np.load(f'./results_cluster/data/new_fig1_giant_step/tkn={target_tkn}_choice2={choice_2layer}/d={d}.npz', allow_pickle=True)
             similarity_simulation = data['arr_0']
             for t in range(T):
-                twoDplot_at(t, show = 1, save = 1)
+                twoDplot_at(t, show = 1, save = 0)
             # threeDplot_at(show = 1, save = 1)
 
 
