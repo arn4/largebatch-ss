@@ -10,7 +10,7 @@ from tqdm import tqdm
 import os 
 p = 1
 k = 1
-gamma0 = .005
+gamma0 = 1e-3
 l = 1
 d = 2**8
 noise = 0.
@@ -21,21 +21,21 @@ activation_derivative = H3H3Overlaps._activation_derivative
 a0 = np.ones(shape=(p,)) /np.sqrt(p)
 colors = []
 # generate palette with 30 different colors 
-# for i in range(10):
-#     for j in range(i+1):
-#         colors.append(plt.cm.tab10(i))
+for i in range(20):
+    for j in range(i+1):
+        colors.append(plt.cm.tab10(i))
 
-colors = ['blue', 'green', 'blue','brown', 'purple', 'orange', 'red', 'black', 'yellow', 'pink']
 threshold_value = 0.15
-# m0s = np.logspace(-100,-3,num = 2)
-m0s = np.array([0,1e-10])
-T = 3
+# m0s = np.logspace(-7,-2,num = 10)
+# m0s = np.array([0.15,0.2])
+m0s = np.linspace(-0.999,0.999, num = 100)
+T = 1500
 similarity_analytical = []
 crossing_times = []
 norms = []
 for m0 in m0s:
     M0 = np.array([[m0]])
-    Q0 = np.array([[1/3]])
+    Q0 = np.array([[1]])
     P0 = np.array([[1]])
     analytical = H3H3Overlaps(
                 P0, M0, Q0, a0,
@@ -50,8 +50,8 @@ for m0 in m0s:
     print(f'm0 = {m0} - crossing time = {crossing_times[-1]}')
 fig, ax = plt.subplots(1,3, figsize = (15,5))
 for i,m0 in enumerate(m0s):
-    ax[0].plot(np.arange(T+1), abs(similarity_analytical[i][:,0,0]), label = f'm0 = {m0}', color = colors[i])
-    ax[2].plot(np.arange(T+1), norms[i][:,0,0], color = 'black', marker = 'o', linestyle = 'None')
+    ax[0].plot(np.arange(T+1), similarity_analytical[i][:,0,0], label = f'm0 = {m0}', color = colors[i])
+    ax[2].plot(np.arange(T+1), norms[i][:,0,0], color = colors[i] , marker = 'o', linestyle = 'None')
 ax[1].plot(m0s, crossing_times, color = 'black', marker = 'o', linestyle = 'None')
 from scipy.optimize import curve_fit
 # def func(x, a, b, c):

@@ -10,7 +10,7 @@ from tqdm import tqdm
 import os 
 p = 1
 k = 1
-gamma0 = .1
+gamma0 = .15
 l = 1
 d = 2**8
 noise = 0.
