@@ -10,9 +10,9 @@ class MonteCarloOverlaps(OverlapsBase):
                  target: callable, activation: callable, activation_derivative: callable,
                  P: np.array, M0: np.array, Q0: np.array,  a0: np.array, 
                  gamma0: float, d: int, l: int, noise: float,
-                 second_layer_update: bool, alpha: float,
+                 second_layer_update: bool,
                  seed: int = 0, mc_size = None):
-        super().__init__(target, activation, activation_derivative, P, M0, Q0, a0, gamma0, d, l, noise, second_layer_update, alpha)
+        super().__init__(target, activation, activation_derivative, P, M0, Q0, a0, gamma0, d, l, noise, second_layer_update)
 
         self.rng = np.random.default_rng(seed)
 

@@ -6,7 +6,8 @@ class GiantStepBase():
                  target: callable, p: int, k: int,
                  activation: callable, a0: np.array, activation_derivative: callable,
                  gamma0: float, d: int, l: float, noise: float,
-                 second_layer_update: bool, alpha: float):
+                 second_layer_update: bool
+                ):
         self.target = target
         self.activation = activation
         self.activation_derivative = activation_derivative
@@ -18,7 +19,6 @@ class GiantStepBase():
         self.n = int(d**l)
         self.noise = noise
         self.second_layer_update = second_layer_update
-        self.alpha = alpha
         
 
         self.a_s = [a0]
@@ -35,8 +35,9 @@ class OverlapsBase(GiantStepBase):
                  target: callable, activation: callable, activation_derivative: callable,
                  P: np.array, M0: np.array, Q0: np.array,  a0: np.array, 
                  gamma0: float, d: int, l: int, noise: float,
-                 second_layer_update: bool, alpha: float):
-        super().__init__(target,Q0.shape[0],P.shape[0], activation, a0, activation_derivative, gamma0, d, l, noise, second_layer_update, alpha)
+                 second_layer_update: bool
+                ):
+        super().__init__(target,Q0.shape[0],P.shape[0], activation, a0, activation_derivative, gamma0, d, l, noise, second_layer_update)
 
         self.Ms = [M0]
         self.Qs = [Q0]

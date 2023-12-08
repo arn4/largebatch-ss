@@ -7,13 +7,13 @@ from .cython_erf_erf import erf_error
 class GradientDescent(GiantStepBase):
     def __init__(self,
                  target: callable, W_target: np.array,
-                 activation: callable, W0: np.array, a0: np.array, activation_derivative: callable,
+                 activation: callable, W0: np.array, a0: np.array,activation_derivative: callable,
                  gamma0: float, l: int, noise: float,
-                 second_layer_update: bool, alpha: float,
+                 second_layer_update: bool,
                  resampling: bool = True,
                  seed: int = 0, test_size = None,
                  analytical_error = None):
-        super().__init__(target, W0.shape[0], W_target.shape[0], activation, a0, activation_derivative, gamma0, W0.shape[1], l, noise, second_layer_update, alpha)
+        super().__init__(target, W0.shape[0], W_target.shape[0], activation, a0, activation_derivative, gamma0, W0.shape[1], l, noise, second_layer_update)
 
         self.rng = np.random.default_rng(seed)
 
@@ -57,10 +57,8 @@ class GradientDescent(GiantStepBase):
         self.W_s.append(
             self.W + self.gamma0 * np.sqrt(self.p) * np.power(self.d,((self.l-1)/2))* 1/self.n * np.einsum('j,uj,u,ui->ji',self.a,self.activation_derivative(zs @ self.W.T),displacements,zs)
         )
-
         if self.second_layer_update:
-            X = self.activation(zs @ self.W.T)/np.sqrt(self.p)
-            self.a_s.append(inverse_matrix(X.T @ X + self.alpha*np.eye(self.p)) @ X.T @ ys)
+            raise NotImplementedError
         else:
             self.a_s.append(self.a)
 

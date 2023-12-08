@@ -3,8 +3,8 @@ import numpy as np
 from .base import OverlapsBase
 
 class PolynomialPolynomialOverlapsBase(OverlapsBase):
-    def __init__(self, P: np.array, M0: np.array, Q0: np.array, a0: np.array, gamma0: float, d: int, l: int, noise: float, second_layer_update: bool, alpha: float):
-        super().__init__(self._target, self._activation, self._activation_derivative, P, M0, Q0, a0, gamma0, d, l, noise, second_layer_update, alpha)
+    def __init__(self, P: np.array, M0: np.array, Q0: np.array, a0: np.array, gamma0: float, d: int, l: int, noise: float, second_layer_update: bool):
+        super().__init__(self._target, self._activation, self._activation_derivative, P, M0, Q0, a0, gamma0, d, l, noise, second_layer_update)
         self.measure()
     def compute_expected_values(self):
         ev_target = np.zeros(shape=(self.p, self.k))
