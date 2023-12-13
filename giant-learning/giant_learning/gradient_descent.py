@@ -8,12 +8,12 @@ class GradientDescent(GiantStepBase):
     def __init__(self,
                  target: callable, W_target: np.array,
                  activation: callable, W0: np.array, a0: np.array,activation_derivative: callable,
-                 gamma0: float, l: int, noise: float,
+                 gamma: float, l: int, noise: float,
                  second_layer_update: bool,
                  resampling: bool = True,
                  seed: int = 0, test_size = None,
                  analytical_error = None):
-        super().__init__(target, W0.shape[0], W_target.shape[0], activation, a0, activation_derivative, gamma0, W0.shape[1], l, noise, second_layer_update)
+        super().__init__(target, W0.shape[0], W_target.shape[0], activation, a0, activation_derivative, gamma, W0.shape[1], l, noise, second_layer_update)
 
         self.rng = np.random.default_rng(seed)
 
@@ -26,6 +26,7 @@ class GradientDescent(GiantStepBase):
 
         self.analytical_error = analytical_error
         if self.analytical_error is None:
+            raise Warning('No analytical error specified, using numerical error. Can be slow!')
             if test_size is None:
                 self.test_size = self.n
             self.test_size = test_size
@@ -40,6 +41,8 @@ class GradientDescent(GiantStepBase):
     def error(self, zs, ys):
         if self.analytical_error == 'erferf':
             return erf_error(self.W @ self.W.T, self.W @ self.W_target.T, self.W_target @ self.W_target.T, self.a, self.noise)
+        elif self.analytical_error == 'H2H2':
+            raise NotImplementedError
         else:
             if zs is None and ys is None:
                 zs, ys = self.zs_test, self.ys_test
@@ -52,10 +55,11 @@ class GradientDescent(GiantStepBase):
         return self.W_s[-1]
 
     def update(self, zs, ys):
-        displacements = np.apply_along_axis(self.target, -1, zs @ self.W_target.T) + np.sqrt(self.noise)*np.random.normal(size=(self.n,)) - np.apply_along_axis(self.network, -1, zs @ self.W.T)
+        displacements = ys - np.apply_along_axis(self.network, -1, zs @ self.W.T)
 
+        # W_j(new) = W_j(old) + gamma/n * a_j * sum_i (y_i - f(z_i)) * sigma'(z_i) * z_i
         self.W_s.append(
-            self.W + self.gamma0 * np.sqrt(self.p) * np.power(self.d,((self.l-1)/2))* 1/self.n * np.einsum('j,uj,u,ui->ji',self.a,self.activation_derivative(zs @ self.W.T),displacements,zs)
+            self.W + self.gamma * 1/self.n * np.einsum('j,uj,u,ui->ji',self.a,self.activation_derivative(zs @ self.W.T),displacements,zs)
         )
         if self.second_layer_update:
             raise NotImplementedError

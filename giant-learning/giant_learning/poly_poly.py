@@ -3,8 +3,8 @@ import numpy as np
 from .base import OverlapsBase
 
 class PolynomialPolynomialOverlapsBase(OverlapsBase):
-    def __init__(self, P: np.array, M0: np.array, Q0: np.array, a0: np.array, gamma0: float, d: int, l: int, noise: float, second_layer_update: bool):
-        super().__init__(self._target, self._activation, self._activation_derivative, P, M0, Q0, a0, gamma0, d, l, noise, second_layer_update)
+    def __init__(self, P: np.array, M0: np.array, Q0: np.array, a0: np.array, gamma: float, d: int, l: int, noise: float, second_layer_update: bool):
+        super().__init__(self._target, self._activation, self._activation_derivative, P, M0, Q0, a0, gamma, d, l, noise, second_layer_update)
         self.measure()
     def compute_expected_values(self):
         ev_target = np.zeros(shape=(self.p, self.k))
@@ -72,8 +72,8 @@ class PolynomialPolynomialOverlapsBase(OverlapsBase):
                 
                 ev_I4[j, l] += self.noise * self._I2noise(self.Q[j,j], self.Q[j,l], self.Q[l,l])
         return ev_target, ev_network, ev_I4
-
-    def measure(self):
+    
+    def error(self):
         population_error = 0.
         for j in range(self.p):
             for l in range(self.p):
@@ -84,7 +84,7 @@ class PolynomialPolynomialOverlapsBase(OverlapsBase):
         for r in range(self.k):
             for t in range(self.k):
                 population_error += 1/self.k * self._I2(self.P[r,r], self.P[r,t], self.P[t,t])
-        self.test_errors.append(population_error)
+        return population_error
         
 
 class H2H2Overlaps(PolynomialPolynomialOverlapsBase):

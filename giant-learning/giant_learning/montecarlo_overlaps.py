@@ -9,10 +9,10 @@ class MonteCarloOverlaps(OverlapsBase):
     def __init__(self,
                  target: callable, activation: callable, activation_derivative: callable,
                  P: np.array, M0: np.array, Q0: np.array,  a0: np.array, 
-                 gamma0: float, d: int, l: int, noise: float,
+                 gamma: float, d: int, l: int, noise: float,
                  second_layer_update: bool,
                  seed: int = 0, mc_size = None):
-        super().__init__(target, activation, activation_derivative, P, M0, Q0, a0, gamma0, d, l, noise, second_layer_update)
+        super().__init__(target, activation, activation_derivative, P, M0, Q0, a0, gamma, d, l, noise, second_layer_update)
 
         self.rng = np.random.default_rng(seed)
 
@@ -69,13 +69,9 @@ class MonteCarloOverlaps(OverlapsBase):
 
         return self.local_fields_montecarlo((local_field_term_target, local_field_term_network, local_field_I4)) 
 
-    def measure(self):
-        # #############
-        # return
-        # #############
+    def error(self):
         def local_field_error(network_field, target_field, noise_randomness):
             return .5*(self.target(target_field)+np.sqrt(self.noise)*noise_randomness-self.network(network_field))**2
         
-        self.test_errors.append(
-            self.local_fields_montecarlo(local_field_error)
-        )
+        return self.local_fields_montecarlo(local_field_error)
+
