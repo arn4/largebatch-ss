@@ -1,0 +1,228 @@
+%%%%%%%% ICML 2024 EXAMPLE LATEX SUBMISSION FILE %%%%%%%%%%%%%%%%%
+
+\documentclass{article}
+
+% Recommended, but optional, packages for figures and better typesetting:
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{booktabs} % for professional tables
+
+% hyperref makes hyperlinks in the resulting PDF.
+% If your build breaks (sometimes temporarily if a hyperlink spans a page)
+% please comment out the following usepackage line and replace
+% \usepackage{icml2024} with \usepackage[nohyperref]{icml2024} above.
+\usepackage{hyperref}
+
+
+% Attempt to make hyperref and algorithmic work together better:
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+% Use the following line for the initial blind version submitted for review:
+\usepackage{icml2024}
+
+% If accepted, instead use the following line for the camera-ready submission:
+% \usepackage[accepted]{icml2024}
+
+% For theorems and such
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+
+% if you use cleveref..
+\usepackage[capitalize,noabbrev]{cleveref}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% THEOREMS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{assumption}[theorem]{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% Todonotes is useful during development; simply uncomment the next line
+%    and comment out the line below the next line to turn off comments
+%\usepackage[disable,textsize=tiny]{todonotes}
+\usepackage[textsize=tiny]{todonotes}
+
+
+% The \icmltitle you define below is probably too long as a header.
+% Therefore, a short form for the running title is supplied here:
+\icmltitlerunning{First order methods}
+
+\begin{document}
+
+\twocolumn[
+\icmltitle{First Order Optimization Methods in Two-Layer Neural Networks Training}
+
+% It is OKAY to include author information, even for blind
+% submissions: the style file will automatically remove it for you
+% unless you've provided the [accepted] option to the icml2024
+% package.
+
+% List of affiliations: The first argument should be a (short)
+% identifier you will use later to specify author affiliations
+% Academic affiliations should list Department, University, City, Region, Country
+% Industry affiliations should list Company, City, Region, Country
+
+% You can specify symbols, otherwise they are numbered in order.
+% Ideally, you should not use this facility. Affiliations will be numbered
+% in order of appearance and this is the preferred way.
+\icmlsetsymbol{equal}{*}
+
+\begin{icmlauthorlist}
+\icmlauthor{Firstname1 Lastname1}{equal,yyy}
+\icmlauthor{Firstname2 Lastname2}{equal,yyy,comp}
+\icmlauthor{Firstname3 Lastname3}{comp}
+\icmlauthor{Firstname4 Lastname4}{sch}
+\icmlauthor{Firstname5 Lastname5}{yyy}
+\icmlauthor{Firstname6 Lastname6}{sch,yyy,comp}
+\icmlauthor{Firstname7 Lastname7}{comp}
+%\icmlauthor{}{sch}
+\icmlauthor{Firstname8 Lastname8}{sch}
+\icmlauthor{Firstname8 Lastname8}{yyy,comp}
+%\icmlauthor{}{sch}
+%\icmlauthor{}{sch}
+\end{icmlauthorlist}
+
+\icmlaffiliation{yyy}{Department of XXX, University of YYY, Location, Country}
+\icmlaffiliation{comp}{Company Name, Location, Country}
+\icmlaffiliation{sch}{School of ZZZ, Institute of WWW, Location, Country}
+
+\icmlcorrespondingauthor{Firstname1 Lastname1}{first1.last1@xxx.edu}
+\icmlcorrespondingauthor{Firstname2 Lastname2}{first2.last2@www.uk}
+
+% You may provide any keywords that you
+% find helpful for describing your paper; these are used to populate
+% the "keywords" metadata in the PDF but will not be shown in the document
+\icmlkeywords{Machine Learning, ICML}
+
+\vskip 0.3in
+]
+
+% this must go after the closing bracket ] following \twocolumn[ ...
+
+% This command actually creates the footnote in the first column
+% listing the affiliations and the copyright notice.
+% The command takes one argument, which is text to display at the start of the footnote.
+% The \icmlEqualContribution command is standard text for equal contribution.
+% Remove it (just {}) if you do not need this facility.
+
+%\printAffiliationsAndNotice{}  % leave blank if no need to mention equal contribution
+\printAffiliationsAndNotice{\icmlEqualContribution} % otherwise use the standard text.
+
+\begin{abstract}
+    We investigate the extents and limits of first order methods optimization algorithms when training two-layer neural networks for a finite number of time steps. We characterize rigorously the class of functions that can be learned efficiently from two-layer networks with a finite number of iterations from a general first order algorithms. We corroborate the claims with extensive numerical simulations. 
+\end{abstract}
+
+\section{Introduction}
+....
+\section{Main Results}
+Our main contribution in this paper are the following: 
+\begin{itemize} 
+    \item We characterize the class of multi-index targets that can be learned efficiently from two-layer networks trained with extensive batch sizes ($n = \alpha d, \alpha = O(1)$) with a finite number of iterations of a general first order algorithms. This class coincides with the class of functions that can be learned with gradient descent, known in the literature as staircase functions.
+    \item We write closed form equations governing the dynamics of the low-dimensional projections of the weights in the teacher subspace and their norms when training with gradient descent. We illustrate the technical differences when studying the online regime - resampling fresh batch of new data at every step - or in the correlated samples regime. The theoretical analysis is based on techniques coming from statistical physics (Dynamical Mean Field Theory, Saad & Solla approach) and we believe is of independent interest.
+    \item We corroborate the theoretical claims with extensive numerical simulations. We show that the theoretical predictions are in good agreement with the numerical simulations.
+\end{itemize}
+
+\section{Related works}
+....
+\section{Setting and Notation}
+Let $\mathcal{D}$ be the set of labeled data $\{\vec{z}^{\nu}, y^{\nu}\}_{\nu \in [n]}$. We consider the labels generated by a multi-index functions:
+\begin{align}
+    y^\nu = f(W^\star z^\nu) + \sqrt{\Delta} \xi^\nu, 
+\end{align}
+where \(W^\star \in \mathbb R^{k\times d} \) is an orthogonal matrix and \(\xi^\nu\sim \mathcal{N}{(0,1)}\) is the artificial noise. A key assumption is that the target depends only on a finite number of low-dimensional projections of the input, i.e., we assume \(k =O(1)\). We are implying that \(y^{\nu}\) depends on \(\vec z^\nu \sim \mathcal{N}(0,I_d)\) just through a low-dimensional representation (linear latent variables). 
+
+We introduce the local fields as:
+\begin{equation}
+    \vec{\lambda}^{\nu}\coloneqq W\vec{z}^{\nu}\in\mathbb{R}^{p}, \quad {\vec{\lambda}^{\star}}^{\nu}\coloneqq W^{\star}\vec{z}^{\nu}\in\mathbb{R}^{k} \qquad \forall \nu \in [n]
+\end{equation}
+We fit these data using a two-layer neural network. Let the first layer weights be $W \in \mathbb{R}^{p \times d}$, the second layer weights \(\vec a\in\mathbb{R}^p\); the full expression of the network is given by
+\[
+    s(\vec z) = \frac{1}{p} \sum_{j=1}^p a_j \sigma{(\vec w_j^\top \vec z)},
+\]
+where \(w_j\) are the rows of \(W\) and \(\sigma\) is the activation function; \(a_j \sim \mathcal{N}(0,1)\) - or similar distribution, e.g,. $a_j = Ber(\pm 1)$. 
+
+Since $\vec{z}^\nu$ is Gaussian and independent from $(W, W^{\star})$, the pre-activations are jointly Gaussian vectors $(\vec{\lambda}^{\nu}, {\vec{\lambda}^{\star}}^{\nu})\sim\mathcal{N}(\vec{0}_{p+k}, \Omega)$ with covariance: 
+\begin{equation}
+\Omega \coloneqq
+\begin{pmatrix}
+Q & M\\
+{M^{\top}} & P
+\end{pmatrix}=
+\begin{pmatrix}
+W{W}^{\top} & W{W^{\star}}^{\top}\\
+W^{\star}W^{\top} & W^{\star} W^{\star T}
+\end{pmatrix}
+\in\mathbb{R}^{(p+k)\times (p+k)}
+\end{equation}
+\subsection*{Training algorithm}
+
+We are going to train the network with layer-wise SGD without replacement, using at each time step batches of size $n_b$: 
+\[
+    \ell = \frac{1}{2n_b} \sum_{\nu=1}^{n_b}(y^\nu - s(\vec z^\nu))^2
+\]
+For the moment, let's suppose the second layer fixed. The gradient of the first layer weights
+\[
+    \nabla_{\vec w_j} \ell = -\frac{1}{pn_b} \sum_{\nu=1}^{n_b} a_j \sigma'(\lambda^\nu_j)\mathcal{E}^\nu \vec{z}^\nu \qquad \forall j \in [p]
+\]
+where we defined for convenience the displacement vector 
+\begin{equation}
+\mathcal{E}^{\nu} \coloneqq y^\nu-s{(\vec z^\nu)}.
+\end{equation}
+Take now one gradient step with learning rate $\gamma_d$:
+\begin{align}
+    \vec w_j^{\tau + 1} = \vec w_j^\tau - \gamma_d  \nabla_{\vec w_j} \ell
+    \label{eq:gd_update_weight}
+ \end{align}
+By projecting the gradient update equation on the matrices $(W,W^*)$ we obtain the following dynamics:
+\begin{equation}
+\begin{aligned}
+M^{\tau}_{jr} - M^{\tau - 1}_{jr} =&  \frac{\gamma_d}{pn_b} a_j^{\tau} \sum_{\nu = 1}^{n_b} \sigma'(\lambda_j^\nu)\lambda^{\star}_{r} \mathcal{E}^{\nu} \\
+Q_{jl}^{\tau} - Q^{\tau -1 }_{jl} =& \frac{\gamma_d}{pn_b} \sum_{\nu = 1}^{n_b} \left(a_j^{\tau}\sigma'(\lambda_j^\nu)\lambda^{\nu}_{l}+a_l^{\tau}\sigma'(\lambda_l^\nu)\lambda^{\nu}_{j}\right) \mathcal{E}^\nu \\
+    % \label{eq7}
+    &+\frac{\gamma_d^2}{p^2n_b^2}a_j^{\tau}a_l^{\tau}\sum_{\nu = 1}^{n_b} \sum_{\nu' = 1}^{n_b} \sigma'(\lambda_j^\nu)\sigma'(\lambda_l^{\nu'})\mathcal{E}^\nu\mathcal{E}^{\nu'} \vec z^{\nu\top} \vec z^{\nu'}
+\label{eq:overlap_training}
+\end{aligned}
+\end{equation}
+The main technical contribtuion is to precisely characterize the dynamics of 2LNN in the high dimensional setting ($d \to \infty$) for two specific training algorithm: ${(n_b, \gamma_d) = (1,\frac {\gamma_0}{d})}$ (Online SGD) and $(n_b, \gamma_d) = (d,\gamma_0)$.
+
+We will consider as well spherical gradient descent, i.e., the modification of eq.~\eqref{eq:gd_update_weight}: 
+\begin{align}
+    \vec w_j^{\tau + 1} = \frac{
+    \vec w_j^\tau - \gamma_d  \nabla_{\vec w_j} \ell}
+    {|| \vec w_j^\tau - \gamma_d  \nabla_{\vec w_j}\ell||}
+    \label{eq:spherical_gd_update_weight}
+\end{align}
+One can show that by projecting on $(W,W^*)$  also the spherical dynamics described in eq.~\eqref{eq:spherical_gd_update_weight} can be compactly written in terms of the overlaps. 
+\\ We will show that in the high dimensional limit the key quantities which will determine the dynamical evolution of the overlaps are compactly written as:
+\begin{equation}
+\begin{aligned}
+    \psi_{jr} =&\mathbb{E}\left[ \sigma'(\lambda_j)\lambda^{\star}_{r} \mathcal{E} \right] \\
+    \phi^{\rm{GF}}_{jl}=&\mathbb{E}\left[ \sigma'(\lambda_j)\lambda_{l} \mathcal{E} \right] \\
+    \phi^{\rm{HD}}_{jl}=&\mathbb{E}\left[ \sigma'(\lambda_j)\sigma'(\lambda_l)\mathcal{E}^2  \right]
+    \label{eq:simplify} 
+\end{aligned}
+\end{equation}
+
+We can also introduce the population loss as
+\begin{equation}
+    \mathcal R = \frac12 \mathbb{E}\left[\mathcal E^2\right],
+\end{equation}
+since it is the quantity telling us the performace of our trained network.
+
+
+
+\section{Theoretical results}
+
+\section{Numerical simulations}
+
+\end{document}
