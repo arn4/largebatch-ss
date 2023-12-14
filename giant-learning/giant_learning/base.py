@@ -5,7 +5,7 @@ class GiantStepBase():
     def __init__(self,
                  target: callable, p: int, k: int, n: int,
                  activation: callable, a0: np.array, activation_derivative: callable,
-                 gamma: float, d: int, l: float, noise: float,
+                 gamma: float, noise: float,
                  second_layer_update: bool
                 ):
         self.target = target
@@ -14,7 +14,6 @@ class GiantStepBase():
         self.gamma = gamma
         self.p = p
         self.k = k
-        self.d = d
         self.n = n
         self.noise = noise
         self.second_layer_update = second_layer_update
@@ -33,10 +32,13 @@ class OverlapsBase(GiantStepBase):
     def __init__(self,
                  target: callable, activation: callable, activation_derivative: callable,
                  P: np.array, M0: np.array, Q0: np.array,  a0: np.array, 
-                 gamma: float, d: int, l: int, noise: float,
-                 second_layer_update: bool
+                 gamma: float, noise: float,
+                 I4_diagonal: bool, I4_offdiagonal: bool, second_layer_update: bool
                 ):
-        super().__init__(target,Q0.shape[0],P.shape[0], activation, a0, activation_derivative, gamma, d, l, noise, second_layer_update)
+        super().__init__(target,Q0.shape[0],P.shape[0], activation, a0, activation_derivative, gamma, noise, second_layer_update)
+
+        self.I4_diagonal = I4_diagonal
+        self.I4_offdiagonal = I4_offdiagonal
 
         self.Ms = [M0]
         self.Qs = [Q0]
@@ -58,21 +60,26 @@ class OverlapsBase(GiantStepBase):
 
     def update(self):
         inverse_Qbot = inverse_matrix(self.Q - self.M @ self.inverse_P @ self.M.T)
-        expected_value_target, expected_value_network, expected_I4 = self.compute_expected_values() 
+        expected_value_target, expected_value_network, expected_I4 = self.compute_expected_values()
         expected_value_orthogonal = expected_value_network - self.M @ self.inverse_P @ (expected_value_target.T)
 
-        self.Ms.append(
-            self.M + self.gamma/self.p * np.einsum('j,jr->jr', self.a, expected_value_target)
-        )
-        self.Qs.append(
-            self.Q + (self.gamma/self.p) * (
+        newM = self.M + self.gamma/self.p * np.einsum('j,jr->jr', self.a, expected_value_target)
+        self.Ms.append(newM)
+
+        newQ = self.Q
+        newQ += (self.gamma/self.p) * (
                 np.einsum('j,jl->jl', self.a, expected_value_network) +
                 np.einsum('l,lj->jl', self.a, expected_value_network)
-            ) + (self.gamma/self.p)**2 * np.einsum('j,l->jl', self.a, self.a) * (
+            )
+        if self.I4_diagonal:
+            newQ += (self.gamma/self.p)**2 * np.einsum('j,l->jl', self.a, self.a ) * expected_I4
+
+        if self.I4_offdiagonal:
+            newQ += (self.gamma/self.p)**2 * np.einsum('j,l->jl', self.a, self.a) * (
                 np.einsum('jr,rt,lt->jl', expected_value_target, self.inverse_P, expected_value_target) +
                 np.einsum('jm,mn,ln->jl', expected_value_orthogonal, inverse_Qbot, expected_value_orthogonal)
-            ) + (self.gamma/self.p)**2 * np.einsum('j,l->jl', self.a, self.a) * expected_I4
-        )
+            )
+        self.Qs.append(newQ)
 
         if self.second_layer_update:
             raise NotImplementedError

@@ -15,8 +15,8 @@ def _activation_derivative(x):
     return np.sqrt(2/np.pi) * np.exp(-x**2/2)
 
 class ErfErfOverlaps(OverlapsBase):
-    def __init__(self, P: np.array, M0: np.array, Q0: np.array, a0: np.array, gamma: float, d: int, l: int, noise: float, second_layer_update: bool):
-        super().__init__(_target, _activation, _activation_derivative, P, M0, Q0, a0, gamma, d, l, noise, second_layer_update)
+    def __init__(self, P: np.array, M0: np.array, Q0: np.array, a0: np.array, gamma: float, d: int, l: int, noise: float, I4_diagonal: bool, I4_offdiagonal: bool, second_layer_update: bool):
+        super().__init__(_target, _activation, _activation_derivative, P, M0, Q0, a0, gamma, noise, I4_diagonal, I4_offdiagonal, second_layer_update)
         self.measure()
     def compute_expected_values(self):
         return erf_updates(self.Q, self.M, self.P, self.a, self.noise)

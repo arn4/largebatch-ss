@@ -6,14 +6,16 @@ from .cython_erf_erf import erf_error
 
 class GradientDescent(GiantStepBase):
     def __init__(self,
-                 target: callable, W_target: np.array,
+                 target: callable, W_target: np.array, n: int,
                  activation: callable, W0: np.array, a0: np.array,activation_derivative: callable,
-                 gamma: float, l: int, noise: float,
+                 gamma: float, noise: float,
                  second_layer_update: bool,
                  resampling: bool = True,
                  seed: int = 0, test_size = None,
                  analytical_error = None):
-        super().__init__(target, W0.shape[0], W_target.shape[0], activation, a0, activation_derivative, gamma, W0.shape[1], l, noise, second_layer_update)
+        super().__init__(target, W0.shape[0], W_target.shape[0], n, activation, a0, activation_derivative, gamma, noise, second_layer_update)
+
+        self.d = W0.shape[1]
 
         self.rng = np.random.default_rng(seed)
 
@@ -57,7 +59,6 @@ class GradientDescent(GiantStepBase):
     def update(self, zs, ys):
         displacements = ys - np.apply_along_axis(self.network, -1, zs @ self.W.T)
 
-        # W_j(new) = W_j(old) + gamma/n * a_j * sum_i (y_i - f(z_i)) * sigma'(z_i) * z_i
         self.W_s.append(
             self.W + self.gamma * 1/self.n * np.einsum('j,uj,u,ui->ji',self.a,self.activation_derivative(zs @ self.W.T),displacements,zs)
         )
