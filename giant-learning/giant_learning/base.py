@@ -45,6 +45,8 @@ class OverlapsBase(GiantStepBase):
         self.P = P
         self.inverse_P = inverse_matrix(P)
 
+        self.measure()
+
     @property
     def M(self):
         return self.Ms[-1]
@@ -92,5 +94,10 @@ class OverlapsBase(GiantStepBase):
     
     def measure(self):
         self.test_errors.append(self.error())
+
+    
+class SpecializedOverlapsBase(OverlapsBase):
+    def __init__(self, P: np.array, M0: np.array, Q0: np.array, a0: np.array, gamma: float, noise: float, I4_diagonal:bool, I4_offdiagonal:bool, second_layer_update: bool):
+        super().__init__(self._target, self._activation, self._activation_derivative, P, M0, Q0, a0, gamma, noise, I4_diagonal, I4_offdiagonal, second_layer_update)
 
 

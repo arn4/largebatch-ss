@@ -1,11 +1,8 @@
 import numpy as np
 
-from .base import OverlapsBase
+from .base import SpecializedOverlapsBase
 
-class PolynomialPolynomialOverlapsBase(OverlapsBase):
-    def __init__(self, P: np.array, M0: np.array, Q0: np.array, a0: np.array, gamma: float, noise: float, I4_diagonal:bool, I4_offdiagonal:bool, second_layer_update: bool):
-        super().__init__(self._target, self._activation, self._activation_derivative, P, M0, Q0, a0, gamma, noise, I4_diagonal, I4_offdiagonal, second_layer_update)
-        self.measure()
+class PolynomialPolynomialOverlapsBase(SpecializedOverlapsBase):
     def compute_expected_values(self):
         ev_target = np.zeros(shape=(self.p, self.k))
         ev_network = np.zeros(shape=(self.p, self.p))
@@ -88,6 +85,7 @@ class PolynomialPolynomialOverlapsBase(OverlapsBase):
         
 
 class H2H2Overlaps(PolynomialPolynomialOverlapsBase):
+    @staticmethod
     def _target(local_fields):
         k = len(local_fields) 
         return 1/np.sqrt(k) * np.sum(local_fields**2-1,axis=-1)
@@ -117,6 +115,7 @@ class H2H2Overlaps(PolynomialPolynomialOverlapsBase):
         return 4*Cab*Ccc*Cdd + 8*Cab*Ccd**2 + 8*Cac*Cbc*Cdd + 16*Cac*Cbd*Ccd + 16*Cad*Cbc*Ccd + 8*Cad*Cbd*Ccc - 4*Cab*Cdd -8*Cac*Cbc - 4*Cab*Ccc - 8*Cad*Cbd + 4*Cab
     
 class H3H3Overlaps(PolynomialPolynomialOverlapsBase):
+    @staticmethod
     def _target(local_fields):
         k = len(local_fields) 
         return 1/np.sqrt(k) * np.sum(local_fields**3-local_fields,axis=-1)
