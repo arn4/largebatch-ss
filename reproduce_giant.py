@@ -21,13 +21,15 @@ def target(lft):
         return lft[...,0]/3 + 2*H_2(lft[...,0])*H_2(lft[...,1]) + lft[...,1]*lft[...,2]
     elif target_tkn == '000':
         return H_2(lft[...,2])*H_3(lft[...,0]/3) + 2*H_2(lft[...,0])*H_3(lft[...,1]) + lft[...,1]*lft[...,2]
+    elif target_tkn == '100_stronger':
+        return lft[...,0]/3 + 2*H_2(lft[...,2])*H_2(lft[...,1]) + lft[...,1]*lft[...,2]
     
 
 second_layers = {'gaussian': 1/np.sqrt(p)*np.random.randn(p) , 'hypercube': np.sign(np.random.normal(size=(p,))) /np.sqrt(p) , 'ones': np.ones(p)/np.sqrt(p),
 '2var': np.sqrt(2/p)*np.random.randn(p), '4var': np.sqrt(4/p)*np.random.randn(p), '8var': np.sqrt(8/p)*np.random.randn(p), 'uniform': np.random.uniform(-np.sqrt(12),np.sqrt(12),size=(p,)) }
 
-tkns = ['111']
-ds = [10] 
+tkns = ['100_stronger']
+ds = [4000] 
 choices = ['hypercube']
 for d in ds: 
     for target_tkn in tkns:
@@ -40,8 +42,8 @@ for d in ds:
             activation_derivative = lambda x: (x>0).astype(float)
 
             Wtarget = orth((normalize(np.random.normal(size=(k,d)), axis=1, norm='l2')).T).T
-            # W0 = 1/np.sqrt(d) * np.random.normal(size=(p,d))
-            W0 = 1/1000 * np.random.normal(size=(p,d))
+            W0 = 1/np.sqrt(d) * np.random.normal(size=(p,d))
+            # W0 = 1/1000 * np.random.normal(size=(p,d))
             a0 = second_layers[choice_2layer]
 
             simulation = GradientDescent(

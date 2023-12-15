@@ -82,8 +82,8 @@ def threeDplot_at(show = 1, save = 0):
         plt.show()
     
 colors = ['darkgreen', 'lime', 'olive']
-tkns = ['111']
-ds = [10] 
+tkns = ['100_stronger']
+ds = [4000] 
 choices = ['hypercube']
 T = 3
 for target_tkn in tkns:
