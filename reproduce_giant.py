@@ -29,7 +29,7 @@ second_layers = {'gaussian': 1/np.sqrt(p)*np.random.randn(p) , 'hypercube': np.s
 '2var': np.sqrt(2/p)*np.random.randn(p), '4var': np.sqrt(4/p)*np.random.randn(p), '8var': np.sqrt(8/p)*np.random.randn(p), 'uniform': np.random.uniform(-np.sqrt(12),np.sqrt(12),size=(p,)) }
 
 tkns = ['100_stronger']
-ds = [4000] 
+ds = [8000] 
 choices = ['hypercube']
 for d in ds: 
     for target_tkn in tkns:
