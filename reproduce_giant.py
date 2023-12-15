@@ -9,7 +9,7 @@ from time import perf_counter_ns
 import os 
 alpha = 0. ; noise = 0.
 
-k = 3 ; gamma0 = 4 ; T = 3 ; mc_samples = 100000 ; p = 100
+k = 3 ; gamma0 = 4 ; T = 3 ; mc_samples = 100000 ; p = 1000
 H_2 = lambda z: z**2 - 1
 H_3 = lambda z: z**3 - 3*z
 def target(lft):
@@ -22,14 +22,14 @@ def target(lft):
     elif target_tkn == '000':
         return H_2(lft[...,2])*H_3(lft[...,0]/3) + 2*H_2(lft[...,0])*H_3(lft[...,1]) + lft[...,1]*lft[...,2]
     elif target_tkn == '100_stronger':
-        return lft[...,0]/3 + 2*H_2(lft[...,2])*H_2(lft[...,1]) + lft[...,1]*lft[...,2]
+        return lft[...,0] + H_2(lft[...,2])*H_2(lft[...,1])/2 + lft[...,1]*lft[...,2]/2
     
 
 second_layers = {'gaussian': 1/np.sqrt(p)*np.random.randn(p) , 'hypercube': np.sign(np.random.normal(size=(p,))) /np.sqrt(p) , 'ones': np.ones(p)/np.sqrt(p),
 '2var': np.sqrt(2/p)*np.random.randn(p), '4var': np.sqrt(4/p)*np.random.randn(p), '8var': np.sqrt(8/p)*np.random.randn(p), 'uniform': np.random.uniform(-np.sqrt(12),np.sqrt(12),size=(p,)) }
 
 tkns = ['100_stronger']
-ds = [8000] 
+ds = [2000] 
 choices = ['hypercube']
 for d in ds: 
     for target_tkn in tkns:
