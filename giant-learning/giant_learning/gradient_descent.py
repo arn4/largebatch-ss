@@ -13,10 +13,10 @@ class GradientDescent(GiantStepBase):
                  resampling: bool = True,
                  seed: int = 0, test_size = None,
                  analytical_error = None):
-        super().__init__(target, W0.shape[0], W_target.shape[0], n, activation, a0, activation_derivative, gamma, noise, second_layer_update)
+        super().__init__(target, W0.shape[0], W_target.shape[0], activation, a0, activation_derivative, gamma, noise, second_layer_update)
 
         self.d = W0.shape[1]
-
+        self.n = n
         self.rng = np.random.default_rng(seed)
 
         self.W_target = W_target

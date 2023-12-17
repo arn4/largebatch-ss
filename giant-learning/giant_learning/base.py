@@ -3,7 +3,7 @@ from numpy.linalg import inv as inverse_matrix
 
 class GiantStepBase():
     def __init__(self,
-                 target: callable, p: int, k: int, n: int,
+                 target: callable, p: int, k: int,
                  activation: callable, a0: np.array, activation_derivative: callable,
                  gamma: float, noise: float,
                  second_layer_update: bool
@@ -14,7 +14,6 @@ class GiantStepBase():
         self.gamma = gamma
         self.p = p
         self.k = k
-        self.n = n
         self.noise = noise
         self.second_layer_update = second_layer_update
         
