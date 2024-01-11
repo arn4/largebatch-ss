@@ -2,8 +2,6 @@ from giant_learning.gradient_descent import GradientDescent
 from giant_learning.montecarlo_overlaps import MonteCarloOverlaps
 from giant_learning.erf_erf import ErfErfOverlaps
 
-from giant_learning.cython_erf_erf import erf_error
-
 import numpy as np
 from scipy.special import erf
 from sklearn.preprocessing import normalize
@@ -21,7 +19,7 @@ target = lambda x: np.mean(erf(x/np.sqrt(2)), axis=-1)
 activation = lambda x: erf(x/np.sqrt(2))
 activation_derivative = lambda x: np.sqrt(2/np.pi) * np.exp(-x**2/2)
 nseeds = 1
-ds = np.logspace(4,12,base=2,num=4,dtype=int)
+ds = np.logspace(8,12,base=2,num=5,dtype=int)
 
 ### save test error as a function of time for each seed and each d ###
 simu_test_errors = np.zeros((nseeds, len(ds), T+1))
@@ -57,7 +55,7 @@ for i,d in enumerate(ds):
         erferf = ErfErfOverlaps(
             P, M0, Q0, a0,
             gamma, noise,
-            I4_diagonal=True, I4_offdiagonal=True,
+            I4_diagonal=True, I4_offdiagonal=False,
             second_layer_update=False)
 
         erferf.train(T)
@@ -71,7 +69,7 @@ for i,d in enumerate(ds):
 ### Plot the average test error with std error bars as a function of time for different d ###
 for i,d in enumerate(ds):
     simu_plot = plt.errorbar(np.arange(T+1), np.mean(simu_test_errors[:,i,:], axis=0), yerr=np.std(simu_test_errors[:,i,:], axis=0), label=f'Simulation - d={d}', marker='o', ls='')
-theo_plot = plt.errorbar(np.arange(T+1), np.mean(theo_test_errors[:,i,:], axis=0), yerr=np.std(theo_test_errors[:,i,:], axis=0), label=f'Theory - d={d}', marker='', color='black', linestyle='-')
+theo_plot = plt.errorbar(np.arange(T+1), np.mean(theo_test_errors[:,i,:], axis=0), yerr=np.std(theo_test_errors[:,i,:], axis=0), label=f'Theory', marker='', color='black', linestyle='-')
 plt.xlabel('Steps')
 plt.ylabel('Test error')
 plt.xscale('log')
