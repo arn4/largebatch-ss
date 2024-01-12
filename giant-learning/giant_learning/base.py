@@ -3,7 +3,7 @@ from numpy.linalg import inv as inverse_matrix
 
 class GiantStepBase():
     def __init__(self,
-                 target: callable, p: int, k: int, n: int,
+                 target: callable, p: int, k: int,
                  activation: callable, a0: np.array, activation_derivative: callable,
                  gamma: float, noise: float,
                  second_layer_update: bool
@@ -14,12 +14,11 @@ class GiantStepBase():
         self.gamma = gamma
         self.p = p
         self.k = k
-        self.n = n
         self.noise = noise
         self.second_layer_update = second_layer_update
-        
+        assert(a0.shape == (p,))
 
-        self.a_s = [a0]
+        self.a_s = [a0.copy()]
         self.test_errors = []
 
         self.network = lambda local_field: 1/np.sqrt(self.p) * np.dot(self.a, self.activation(local_field))
@@ -40,9 +39,9 @@ class OverlapsBase(GiantStepBase):
         self.I4_diagonal = I4_diagonal
         self.I4_offdiagonal = I4_offdiagonal
 
-        self.Ms = [M0]
-        self.Qs = [Q0]
-        self.P = P
+        self.Ms = [M0.copy()]
+        self.Qs = [Q0.copy()]
+        self.P = P.copy()
         self.inverse_P = inverse_matrix(P)
 
         self.measure()
@@ -97,7 +96,7 @@ class OverlapsBase(GiantStepBase):
 
     
 class SpecializedOverlapsBase(OverlapsBase):
-    def __init__(self, P: np.array, M0: np.array, Q0: np.array, a0: np.array, gamma: float, noise: float, I4_diagonal:bool, I4_offdiagonal:bool, second_layer_update: bool):
+    def __init__(self, P: np.array, M0: np.array, Q0: np.array, a0: np.array, gamma: float, noise: float, I4_diagonal: bool=True, I4_offdiagonal: bool=True, second_layer_update: bool=False):
         super().__init__(self._target, self._activation, self._activation_derivative, P, M0, Q0, a0, gamma, noise, I4_diagonal, I4_offdiagonal, second_layer_update)
 
 

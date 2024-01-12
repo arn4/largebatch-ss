@@ -3,6 +3,7 @@ from numpy.linalg import inv as inverse_matrix
 
 from .base import GiantStepBase
 from .cython_erf_erf import erf_error
+from .staircase_overlaps import Hermite2Relu_Staricase2
 
 class GradientDescent(GiantStepBase):
     def __init__(self,
@@ -13,14 +14,14 @@ class GradientDescent(GiantStepBase):
                  resampling: bool = True,
                  seed: int = 0, test_size = None,
                  analytical_error = None):
-        super().__init__(target, W0.shape[0], W_target.shape[0], n, activation, a0, activation_derivative, gamma, noise, second_layer_update)
+        super().__init__(target, W0.shape[0], W_target.shape[0], activation, a0, activation_derivative, gamma, noise, second_layer_update)
 
         self.d = W0.shape[1]
-
+        self.n = n
         self.rng = np.random.default_rng(seed)
 
-        self.W_target = W_target
-        self.W_s = [W0]
+        self.W_target = W_target.copy()
+        self.W_s = [W0.copy()]
 
         self.resampling = resampling
         if not resampling:
@@ -45,6 +46,8 @@ class GradientDescent(GiantStepBase):
             return erf_error(self.W @ self.W.T, self.W @ self.W_target.T, self.W_target @ self.W_target.T, self.a, self.noise)
         elif self.analytical_error == 'H2H2':
             raise NotImplementedError
+        elif self.analytical_error == 'hermite2ReLuStaircase2':
+            return Hermite2Relu_Staricase2(self.W_target @ self.W_target.T, self.W @ self.W_target.T, self.W @ self.W.T, self.a, self.gamma, self.noise).error()
         else:
             if zs is None and ys is None:
                 zs, ys = self.zs_test, self.ys_test

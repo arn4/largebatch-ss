@@ -19,7 +19,6 @@ class MonteCarloOverlaps(OverlapsBase):
         if mc_size is None:
             self.mc_size = self.n
         self.mc_size = mc_size
-        self.measure()
     
     def local_fields_montecarlo(self, fs, std = False):
         single_input = False
