@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.special import erf
 
-from .base import SpecializedOverlapsBase
+from .base import SpecializedOverlapsBase, SphericalOverlapsBase
 from .cython_erf_erf import erf_updates, erf_error
 
 
@@ -21,4 +21,7 @@ class ErfErfOverlaps(SpecializedOverlapsBase):
     
     def error(self):
         return erf_error(self.Q, self.M, self.P, self.a, self.noise)
+    
+class SphericalErfErfOverlaps(SphericalOverlapsBase, ErfErfOverlaps):
+    pass
         

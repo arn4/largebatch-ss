@@ -31,7 +31,7 @@ cpdef erf_updates(np.ndarray[DTYPE_t, ndim=2] Q, np.ndarray[DTYPE_t, ndim=2] M, 
   cdef np.ndarray[DTYPE_t, ndim=2] expected_I4 = np.zeros_like(Q, dtype=DTYPE)
   cdef int p = Q.shape[0]
   cdef int k = P.shape[0]
-  cdef DTYPE_t one_over_sqrtp = 1./sqrt(p)
+  cdef DTYPE_t one_over_p = 1./p
   cdef DTYPE_t one_over_k = 1./k
 
   # Indexs for the for cycles (needed to have pure C for-loops)
@@ -44,7 +44,7 @@ cpdef erf_updates(np.ndarray[DTYPE_t, ndim=2] Q, np.ndarray[DTYPE_t, ndim=2] M, 
 
       # Student
       for l in range(0,p):
-        expected_I3_target[j,r] -= one_over_sqrtp * a[l] * I3(Q[j,j], M[j,r], Q[j,l], P[r,r], M[l,r], Q[l,l])
+        expected_I3_target[j,r] -= one_over_p * a[l] * I3(Q[j,j], M[j,r], Q[j,l], P[r,r], M[l,r], Q[l,l])
 
       # Teacher
       for s in range(0,k):
@@ -56,7 +56,7 @@ cpdef erf_updates(np.ndarray[DTYPE_t, ndim=2] Q, np.ndarray[DTYPE_t, ndim=2] M, 
 
       ## Student
       for m in range(0,p):
-        expected_I3_network[j,l] -= one_over_sqrtp * a[m] * I3(Q[j,j], Q[j,l], Q[j,m], Q[l,l], Q[l,m], Q[m,m])
+        expected_I3_network[j,l] -= one_over_p * a[m] * I3(Q[j,j], Q[j,l], Q[j,m], Q[l,l], Q[l,m], Q[m,m])
 
       for r in range(0,k):
         expected_I3_network[j,l] += one_over_k * I3(Q[j,j], Q[j,l], M[j,r], Q[l,l], M[l,r], P[r,r]) 
@@ -68,12 +68,12 @@ cpdef erf_updates(np.ndarray[DTYPE_t, ndim=2] Q, np.ndarray[DTYPE_t, ndim=2] M, 
       # Student-student
       for o in range(0,p):
         for q in range(0,p):
-          expected_I4[j,l] += square(one_over_sqrtp) * a[o]*a[q] * I4(Q[j,j], Q[j,l], Q[j,o], Q[j,q], Q[l,l], Q[l,o], Q[l,q], Q[o,o], Q[o,q], Q[q,q])
+          expected_I4[j,l] += square(one_over_p) * a[o]*a[q] * I4(Q[j,j], Q[j,l], Q[j,o], Q[j,q], Q[l,l], Q[l,o], Q[l,q], Q[o,o], Q[o,q], Q[q,q])
 
       # Student-teacher
       for o in range(0,p):
         for r in range(0,k):
-          expected_I4[j,l] -= 2 * one_over_sqrtp * one_over_k * a[o] * I4(Q[j,j], Q[j,l], Q[j,o], M[j,r], Q[l,l], Q[l,o], M[l,r], Q[o,o], M[o,r], P[r,r])
+          expected_I4[j,l] -= 2 * one_over_p * one_over_k * a[o] * I4(Q[j,j], Q[j,l], Q[j,o], M[j,r], Q[l,l], Q[l,o], M[l,r], Q[o,o], M[o,r], P[r,r])
 
       # Teacher-Teacher
       for r in range(0,k):
@@ -90,7 +90,7 @@ cpdef erf_error(np.ndarray[DTYPE_t, ndim=2] Q, np.ndarray[DTYPE_t, ndim=2] M, np
 
   cdef int p = Q.shape[0]
   cdef int k = P.shape[0]
-  cdef DTYPE_t one_over_sqrtp = 1./sqrt(p)
+  cdef DTYPE_t one_over_p = 1./p
   cdef DTYPE_t one_over_k = 1./k
 
   cdef int j,l
@@ -102,15 +102,15 @@ cpdef erf_error(np.ndarray[DTYPE_t, ndim=2] Q, np.ndarray[DTYPE_t, ndim=2] M, np
   # Teacher-Student
   for j in range(0,p):
     for l in range(0,k):
-      risk -= 2*one_over_sqrtp*one_over_k * a[j] * I2(Q[j,j], M[j,l], P[l,l])
+      risk -= 2*one_over_p*one_over_k * a[j] * I2(Q[j,j], M[j,l], P[l,l])
   # Student-Student
   for j in range(0,p):
     for l in range(0,p):
-      risk += square(one_over_sqrtp) * a[j]*a[l] * I2(Q[j,j], Q[j,l], Q[l,l])
+      risk += square(one_over_p) * a[j]*a[l] * I2(Q[j,j], Q[j,l], Q[l,l])
 
   # Noise term
   risk += noise
 
-  return risk
+  return risk/2
 
 

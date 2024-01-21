@@ -1,24 +1,22 @@
 import numpy as np
 from tqdm import tqdm
-from numpy.linalg import inv as inverse_matrix
 from collections.abc import Iterable
 
-from .base import GiantStepBase, OverlapsBase
+from .base import OverlapsBase
 
 class MonteCarloOverlaps(OverlapsBase):
     def __init__(self,
                  target: callable, activation: callable, activation_derivative: callable,
                  P: np.array, M0: np.array, Q0: np.array,  a0: np.array, 
-                 gamma: float, d: int, l: int, noise: float,
-                 I4_diagonal: bool, I4_off_diagonal: bool, second_layer_update: bool, 
+                 gamma: float, noise: float,
+                 I4_diagonal: bool = True, I4_off_diagonal: bool = True, second_layer_update: bool = False, 
                  seed: int = 0, mc_size = None):
-        super().__init__(target, activation, activation_derivative, P, M0, Q0, a0, gamma, noise, I4_diagonal, I4_off_diagonal, second_layer_update)
-
         self.rng = np.random.default_rng(seed)
-
         if mc_size is None:
             self.mc_size = self.n
         self.mc_size = mc_size
+
+        super().__init__(target, activation, activation_derivative, P, M0, Q0, a0, gamma, noise, I4_diagonal, I4_off_diagonal, second_layer_update)
     
     def local_fields_montecarlo(self, fs, std = False):
         single_input = False
