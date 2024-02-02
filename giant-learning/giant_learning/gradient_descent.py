@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.linalg import inv as inverse_matrix
+from tqdm import tqdm
 
 from .base import GiantStepBase
 from .cython_erf_erf import erf_error
@@ -71,7 +72,7 @@ class GradientDescent(GiantStepBase):
         else:
             displacements = ys
 
-        return self.gamma * 1/self.n * np.einsum('j,uj,u,ui->ji',self.a,self.activation_derivative(zs @ self.W.T),displacements,zs)
+        return self.gamma * 1/(self.n*self.p) * np.einsum('j,uj,u,ui->ji',self.a,self.activation_derivative(zs @ self.W.T),displacements,zs)
 
     def update(self, zs, ys):
         updateW = self.weight_update(zs, ys)
@@ -83,11 +84,13 @@ class GradientDescent(GiantStepBase):
         else:
             self.a_s.append(self.a)
 
+        GiantStepBase.update(self)
+
     def measure(self, zs = None, ys = None):
         self.test_errors.append(self.error(zs, ys))
 
-    def train(self, steps):
-        for step in range(steps):
+    def train(self, steps, verbose=False):
+        for step in tqdm(range(steps), disable=not verbose):
             if self.resampling:
                 zs, ys = self.samples(self.n)
                 self.update(zs, ys)
@@ -105,3 +108,5 @@ class SphericalGradientDescent(GradientDescent):
             raise NotImplementedError
         else:
             self.a_s.append(self.a)
+
+        GiantStepBase.update(self)

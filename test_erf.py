@@ -8,10 +8,10 @@ from sklearn.preprocessing import normalize
 from scipy.linalg import orth
 import matplotlib.pyplot as plt
 
-p = 1
+p = 4
 # l = 1.
-k = 1
-T = 500
+k = 2
+T = 3000
 gamma = 1.
 noise = 1e-6
 alpha = 0.
@@ -19,17 +19,21 @@ target = lambda x: np.mean(erf(x/np.sqrt(2)), axis=-1)
 activation = lambda x: erf(x/np.sqrt(2))
 activation_derivative = lambda x: np.sqrt(2/np.pi) * np.exp(-x**2/2)
 nseeds = 1
-ds = np.logspace(8,9,base=2,num=3,dtype=int)
+ds = np.logspace(9,10 ,base=2,num=2,dtype=int)
 
 ### save test error as a function of time for each seed and each d ###
 simu_test_errors = np.zeros((nseeds, len(ds), T+1))
 spherical_simu_test_errors = np.zeros((nseeds, len(ds), T+1))
+simu_test_errors2 = np.zeros((nseeds, len(ds), T+1))
+spherical_simu_test_errors2 = np.zeros((nseeds, len(ds), T+1))
 theo_test_errors = np.zeros((nseeds, len(ds), T+1))
 spherical_test_errors = np.zeros((nseeds, len(ds), T+1))
+theo_test_errors2 = np.zeros((nseeds, len(ds), T+1))
+spherical_test_errors2 = np.zeros((nseeds, len(ds), T+1))
 for i,d in enumerate(ds):
     n = d
     # t = 1/np.sqrt(d) ### fix initial overlap 
-    t = .0
+    t = .0001
     print(f'NOW Running d = {d}')
     for seed in range(nseeds):
         print(f'Seed = {seed}')
@@ -61,40 +65,46 @@ for i,d in enumerate(ds):
         gd.train(T)
         spherical_gd.train(T)
 
-        simu_test_errors[seed, i, :] = gd.test_errors
+        # simu_test_errors[seed, i, :] = np.einsum('tji,ri->tjr', gd.W_s, Wtarget)[:,0,0] #gd.test_errors
         spherical_simu_test_errors[seed, i, :] = spherical_gd.test_errors
+        simu_test_errors[seed, i, :] = gd.test_errors
+        # spherical_simu_test_errors2[seed, i, :] = np.einsum('tji,ri->tjr', spherical_gd.W_s, Wtarget)[:,1,0]
+
 
         # Create a ErfErf object
         erferf = ErfErfOverlaps(
             P, M0, Q0, a0,
             gamma, noise,
-            I4_diagonal=True, I4_offdiagonal=True,
+            I4_diagonal=d/n, I4_offdiagonal=True,
             second_layer_update=False)
         
         erferf_spherical = SphericalErfErfOverlaps(
             P, M0, Q0, a0,
             gamma, noise,
-            I4_diagonal=True, I4_offdiagonal=True,
+            I4_diagonal=d/n, I4_offdiagonal=True,
             second_layer_update=False)
 
         erferf.train(T)
         erferf_spherical.train(T)
 
-        print('m=',erferf_spherical.Ms[14])
-        print('q=',erferf_spherical.Qs[14])
-
+        # theo_test_errors[seed, i, :] = np.array(erferf.Ms)[:,0,0] #erferf.test_errors
+        # spherical_test_errors[seed, i, :] = np.array(erferf.Ms)[:,0,0] #erferf_spherical.test_errors
         theo_test_errors[seed, i, :] = erferf.test_errors
         spherical_test_errors[seed, i, :] = erferf_spherical.test_errors
 
 
-######## PLOTS ########
+######## PLOTS #######
 
 ### Plot the average test error with std error bars as a function of time for different d ###
 for i,d in enumerate(ds):
     simu_plot = plt.errorbar(np.arange(T+1), np.mean(simu_test_errors[:,i,:], axis=0), yerr=np.std(simu_test_errors[:,i,:], axis=0), label=f'Simulation - d={d}', marker='o', ls='')
     spherical_simu_plot = plt.errorbar(np.arange(T+1), np.mean(spherical_simu_test_errors[:,i,:], axis=0), yerr=np.std(spherical_simu_test_errors[:,i,:], axis=0), label=f'Spherical Simulation - d={d}', marker='x', ls='')
+    simu_plot = plt.errorbar(np.arange(T+1), np.mean(simu_test_errors2[:,i,:], axis=0), yerr=np.std(simu_test_errors[:,i,:], axis=0), label=f'Simulation - d={d}', marker='o', ls='')
+    spherical_simu_plot = plt.errorbar(np.arange(T+1), np.mean(spherical_simu_test_errors2[:,i,:], axis=0), yerr=np.std(spherical_simu_test_errors[:,i,:], axis=0), label=f'Spherical Simulation - d={d}', marker='x', ls='')
 theo_plot = plt.errorbar(np.arange(T+1), np.mean(theo_test_errors[:,i,:], axis=0), yerr=np.std(theo_test_errors[:,i,:], axis=0), label=f'Theory', marker='', color='black', linestyle='-')
 spherical_plot = plt.errorbar(np.arange(T+1), abs(np.mean(spherical_test_errors[:,i,:], axis=0)), yerr=np.std(spherical_test_errors[:,i,:], axis=0), label=f'Spherical Theory', marker='', color='gray', linestyle='--')
+theo_plot = plt.errorbar(np.arange(T+1), np.mean(theo_test_errors2[:,i,:], axis=0), yerr=np.std(theo_test_errors[:,i,:], axis=0), label=f'Theory', marker='', color='black', linestyle='-')
+spherical_plot = plt.errorbar(np.arange(T+1), abs(np.mean(spherical_test_errors2[:,i,:], axis=0)), yerr=np.std(spherical_test_errors[:,i,:], axis=0), label=f'Spherical Theory', marker='', color='gray', linestyle='--')
 plt.xlabel('Steps')
 plt.ylabel('Test error')
 plt.xscale('log')
