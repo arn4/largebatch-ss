@@ -123,7 +123,7 @@ class H3H3Overlaps(PolynomialPolynomialOverlapsBase):
     @staticmethod
     def _target(local_fields):
         k = len(local_fields) 
-        return 1/k * np.sum(local_fields**3-local_fields,axis=-1)
+        return 1/k * np.sum(local_fields**3-3*local_fields,axis=-1)
     
     @staticmethod
     def _activation(x):
@@ -165,9 +165,33 @@ class H3H3Overlaps(PolynomialPolynomialOverlapsBase):
             81*Ccc*Ccd*Cdd - 81*Caa*Ccc*Ccd*Cdd + 162*Cab**2*Ccc*Ccd*Cdd - 81*Cbb*Ccc*Ccd*Cdd + 81*Caa*Cbb*Ccc*Ccd*Cdd
         )
     
+class H4H4Overlaps(PolynomialPolynomialOverlapsBase):
+    @staticmethod
+    def _target(local_fields):
+        k = len(local_fields) 
+        return 1/k * np.sum(local_fields**4-6*local_fields**2+3,axis=-1)
+    
+    @staticmethod
+    def _activation(x):
+        return x**4 - 6*x**2 + 3
+    
+    @staticmethod
+    def _activation_derivative(x):
+        return 4*x**3 - 12*x
+
+    @staticmethod
+    def _I2(Caa, Cab, Cbb):
+        return (
+            9 - 18*Caa + 9*Caa**2 + 72*Cab**2 - 72*Caa*Cab**2 + 24*Cab**4 - 18*Cbb + 36*Caa*Cbb - 18*Caa**2*Cbb - 72*Cab**2*Cbb + 
+            72*Caa*Cab**2*Cbb + 9*Cbb**2 - 18*Caa*Cbb**2 + 9*Caa**2*Cbb**2
+        )
+    
 
 class SphericalH2H2Overlaps(SphericalOverlapsBase, H2H2Overlaps):
     pass
 
 class SphericalH3H3Overlaps(SphericalOverlapsBase, H3H3Overlaps):
+    pass
+
+class SphericalH4H4Overlaps(SphericalOverlapsBase, H4H4Overlaps):
     pass

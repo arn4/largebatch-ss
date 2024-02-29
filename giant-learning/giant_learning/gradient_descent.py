@@ -5,7 +5,7 @@ from tqdm import tqdm
 from .base import GiantStepBase
 from .cython_erf_erf import erf_error
 from .staircase_overlaps import Hermite2Relu_Staricase2
-from .poly_poly import H2H2Overlaps, H3H3Overlaps
+from .poly_poly import H2H2Overlaps, H3H3Overlaps, H4H4Overlaps
 
 class GradientDescent(GiantStepBase):
     def __init__(self,
@@ -51,6 +51,8 @@ class GradientDescent(GiantStepBase):
             return H2H2Overlaps(self.W_target @ self.W_target.T, self.W @ self.W_target.T, self.W @ self.W.T, self.a, self.gamma, self.noise).error()
         elif self.analytical_error == 'H3H3':
             return H3H3Overlaps(self.W_target @ self.W_target.T, self.W @ self.W_target.T, self.W @ self.W.T, self.a, self.gamma, self.noise).error()
+        elif self.analytical_error == 'H4H4':
+            return H4H4Overlaps(self.W_target @ self.W_target.T, self.W @ self.W_target.T, self.W @ self.W.T, self.a, self.gamma, self.noise).error()
         elif self.analytical_error == 'hermite2ReLuStaircase2':
             return Hermite2Relu_Staricase2(self.W_target @ self.W_target.T, self.W @ self.W_target.T, self.W @ self.W.T, self.a, self.gamma, self.noise).error()
         elif self.analytical_error is None:
