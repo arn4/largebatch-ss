@@ -8,7 +8,7 @@ class GiantStepBase():
                  target: callable, p: int, k: int,
                  activation: callable, a0: np.array, activation_derivative: callable,
                  gamma: float, noise: float,
-                 predictor_interaction: bool|str, second_layer_update: bool
+                 predictor_interaction: bool, second_layer_update: bool
                 ):
         self.target = target
         self.activation = activation
@@ -48,7 +48,7 @@ class OverlapsBase(GiantStepBase):
                  target: callable, activation: callable, activation_derivative: callable,
                  P: np.array, M0: np.array, Q0: np.array,  a0: np.array, 
                  gamma: float, noise: float,
-                 I4_diagonal: bool|float, I4_offdiagonal: bool, I3: bool, 
+                 I4_diagonal: bool, I4_offdiagonal: bool, I3: bool, 
                  predictor_interaction: bool, second_layer_update: bool
                 ):
         super().__init__(target,Q0.shape[0],P.shape[0], activation, a0, activation_derivative, gamma, noise, predictor_interaction, second_layer_update)
