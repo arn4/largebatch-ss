@@ -14,7 +14,7 @@ class GradientDescent(GiantStepBase):
                  gamma: float, noise: float,
                  predictor_interaction: bool=True,
                  second_layer_update: bool=False,
-                 resampling: bool = True,
+                 resampling = True,
                  seed: int = 0, test_size = None,
                  analytical_error = None):
         super().__init__(target, W0.shape[0], W_target.shape[0], activation, a0, activation_derivative, gamma, noise, predictor_interaction, second_layer_update)
@@ -96,6 +96,15 @@ class GradientDescent(GiantStepBase):
             if self.resampling:
                 zs, ys = self.samples(self.n)
                 self.update(zs, ys)
+            # if self.resampling == 'SAM':
+            #     "Now implementing the SAM mechanism"
+            #     if step % 2 == 0:
+            #         zs , ys = self.samples(self.n)
+            #         self.update(zs, ys)
+            #         self.fixed_ys = ys
+            #         self.fixed_zs = zs
+            #     else: 
+            #         self.update(self.fixed_zs, self.fixed_ys) 
             else:
                 self.update(self.fixed_zs, self.fixed_ys)
             self.measure()

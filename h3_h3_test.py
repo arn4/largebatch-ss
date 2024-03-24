@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 p = 1
 # l = 1.
 k = 1
-T = 117
+T = 100
 noise = 1e-6
 predictor_interaction = False
 target = H3H3Overlaps._target
@@ -52,13 +52,13 @@ for i,d in enumerate(ds):
         gd = ProjectedGradientDescent(
             target, Wtarget, n,
             activation, W0, a0, activation_derivative,
-            gamma, noise, predictor_interaction=not predictor_interaction,
+            gamma, noise, predictor_interaction = not predictor_interaction,
             test_size = None, analytical_error= 'H3H3'
         )
         spherical_gd = ProjectedGradientDescent(
             target, Wtarget, n,
             activation, W0, a0, activation_derivative,
-            gamma, noise, predictor_interaction=predictor_interaction,
+            gamma, noise, predictor_interaction  = predictor_interaction,
             test_size = None, analytical_error= 'H3H3'
         )
 
@@ -75,7 +75,7 @@ for i,d in enumerate(ds):
             P, M0, Q0, a0,
             gamma, noise,
             I4_diagonal=d/n, I4_offdiagonal=offdiag,
-            predictor_interaction=not predictor_interaction)
+            predictor_interaction = not predictor_interaction)
         
         h3h3_spherical = ProjectedH3H3Overlaps(
             P, M0, Q0, a0,
