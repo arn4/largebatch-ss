@@ -8,7 +8,7 @@ from sklearn.preprocessing import normalize
 from scipy.linalg import orth
 import matplotlib.pyplot as plt
 
-p = 1
+p = 100
 k = 1
 noise = 1e-6
 predictor_interaction = False
@@ -16,14 +16,31 @@ target = H3H3Overlaps._target
 activation = H3H3Overlaps._activation
 activation_derivative = H3H3Overlaps._activation_derivative
 nseeds = 1
-ds = np.logspace(6,10,base=2,num=1,dtype=int)
-T = 10*max(ds)**2
-simu_test_errors = np.zeros((nseeds, len(ds), T+1))
-simu_test_errors_sam = np.zeros((nseeds, len(ds), T+1))
+ds = np.logspace(5, 7, base = 2, num = 3, dtype=int)
+# choice_gamma = 'sgd_optimal' 
+choice_gamma = 'sam'
+Ts = []
+test_errors_mean = [] 
+test_errors_std = []
+test_errors_sam = []
+test_errors_sam_std = []
+Ms_mean = []
+Ms_std = []
+Ms_sam_mean = []
+Ms_sam_std = []
 for i,d in enumerate(ds):
+    T = int(1.5*d**2)
+    Ts.append(T)
     n = int(1)
-    t = 4/np.sqrt(d)  ### fix initial overlap
-    gamma = .01 * n * np.power(d,-3/2)
+    t = 1/np.sqrt(d)  ### fix initial overlap
+    if choice_gamma == 'sgd_optimal':
+        gamma = .01 * n * np.power(d,-3/2)
+    else: 
+        gamma = .01 * n * np.power(d,-1.)
+    simu_test_errors = np.zeros((nseeds, T+1))
+    simu_test_errors_sam = np.zeros((nseeds,  T+1))
+    Ms = np.zeros((nseeds, T+1, p, k))
+    Ms_sam = np.zeros((nseeds, T+1, p, k))
     print(f'NOW Running d = {d}')
     for seed in range(nseeds):
         print(f'Seed = {seed}')
@@ -45,7 +62,7 @@ for i,d in enumerate(ds):
         if M0[0,0] < 0:
             W0 = -W0
             M0 = -M0
-        # Standard projected GD 
+        # Standard spherical SGD 
         gd = SphericalGradientDescent(
             target, Wtarget, n,
             activation, W0, a0, activation_derivative,
@@ -54,8 +71,8 @@ for i,d in enumerate(ds):
         )
         gd.train(T) # Train for T steps
         Ws = np.array(gd.W_s) # Save Ws
-        Ms = Ws @ Wtarget.T  # Overlap between Ws and Wtarget as a function of time
-        simu_test_errors[seed, i, :] = gd.test_errors # Save test errors
+        simu_test_errors[seed, :] = gd.test_errors # Save test errors
+        Ms[seed, :] = Ws @ Wtarget.T
 
         # Proxy for SAM -- resample every other step 
         sam = SphericalGradientDescent(
@@ -66,32 +83,17 @@ for i,d in enumerate(ds):
         )
         sam.train(T) # Train for T steps
         Ws_sam = np.array(sam.W_s) # Save Ws
-        Ms_sam = Ws_sam @ Wtarget.T # Overlap between Ws and Wtarget as a function of time
-        simu_test_errors_sam[seed, i, :] = sam.test_errors # Save test errors
+        simu_test_errors_sam[seed, :] = sam.test_errors # Save test errors
+        Ms_sam[seed, :] = Ws_sam @ Wtarget.T
+    test_errors_mean.append(np.mean(simu_test_errors, axis=0))
+    test_errors_std.append(np.std(simu_test_errors, axis=0))
+    test_errors_sam.append(np.mean(simu_test_errors_sam, axis=0))
+    test_errors_sam_std.append(np.std(simu_test_errors_sam, axis=0))
+    Ms_mean.append(np.mean(Ms, axis=0))
+    Ms_std.append(np.std(Ms, axis=0))
+    Ms_sam_mean.append(np.mean(Ms_sam, axis=0))
+    Ms_sam_std.append(np.std(Ms_sam, axis=0))
 
+### SAVE ###
 
-
-######## PLOTS ########
-
-### Plot the average test error with std error bars as a function of time for different d ### 
-### 2 subplots: first comparing the overlap os SAM vs SGD, second comparing test errors for different d ###
-fig, ax = plt.subplots(1,2, figsize=(12,6))
-for i,d in enumerate(ds):
-    # Test errors
-    ax[0].errorbar(np.arange(T+1), np.mean(simu_test_errors[:,i,:], axis=0), yerr=np.std(simu_test_errors[:,i,:], axis=0), label=f'SGD d={d}', marker='x', ls='')
-    ax[0].errorbar(np.arange(T+1), np.mean(simu_test_errors_sam[:,i,:], axis=0), yerr=np.std(simu_test_errors_sam[:,i,:], axis=0), label=f'SAM d={d}', marker='x', ls='')
-    # Overlaps
-    ax[1].plot(np.arange(T+1), Ms[:,0], label=f'SGD d={d}')
-    ax[1].plot(np.arange(T+1), Ms_sam[:,0], label=f'SAM d={d}')
-ax[0].axvline(x=d**2, color='k', ls='--')
-ax[0].set_xlabel('Steps')
-ax[0].set_ylabel('Test error')
-ax[0].set_xscale('log')
-ax[0].set_yscale('log')
-ax[0].legend()
-ax[1].axvline(x=d**2, color='k', ls='--')
-ax[1].set_xlabel('Steps')
-ax[1].set_ylabel('Overlap')
-ax[1].legend()
-plt.show()
-
+np.savez(f'computation-database/sam_vs_sgd_p={p}_gamma={choice_gamma}.npz', ds=ds, Ts=Ts, test_errors_mean=test_errors_mean, test_errors_std=test_errors_std, test_errors_sam=test_errors_sam, test_errors_sam_std=test_errors_sam_std, Ms_mean=Ms_mean, Ms_std=Ms_std, Ms_sam_mean=Ms_sam_mean, Ms_sam_std=Ms_sam_std)
