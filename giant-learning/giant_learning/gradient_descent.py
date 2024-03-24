@@ -12,8 +12,8 @@ class GradientDescent(GiantStepBase):
                  target: callable, W_target: np.array, n: int,
                  activation: callable, W0: np.array, a0: np.array,activation_derivative: callable,
                  gamma: float, noise: float,
-                 predictor_interaction: bool=True,
-                 second_layer_update: bool=False,
+                 predictor_interaction: bool = True,
+                 second_layer_update: bool = False,
                  resample_every: int = 1,
                  seed: int = 0, test_size = None,
                  analytical_error = None):
