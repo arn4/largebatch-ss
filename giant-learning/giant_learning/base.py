@@ -138,7 +138,7 @@ class SpecializedOverlapsBase(OverlapsBase):
         super().__init__(self._target, self._activation, self._activation_derivative, P, M0, Q0, a0, gamma, noise, I4_diagonal, I4_offdiagonal, I3, predictor_interaction, second_layer_update)
 
 
-class SphericalOverlapsBase(OverlapsBase):
+class ProjectedOverlapsBase(OverlapsBase):
     def update(self):
         updateM, updateQ = self.overlap_update()
         M = self.M

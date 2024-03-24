@@ -100,9 +100,34 @@ class GradientDescent(GiantStepBase):
                 self.update(self.fixed_zs, self.fixed_ys)
             self.measure()
 
+class ProjectedGradientDescent(GradientDescent):
+    def update(self, zs, ys):
+        updateW = self.weight_update(zs, ys)
+        self.W_s.append(
+            (self.W + updateW) / np.linalg.norm(self.W + updateW, axis=1, keepdims=True)
+        )
+        if self.second_layer_update:
+            raise NotImplementedError
+        else:
+            self.a_s.append(self.a)
+
+        GiantStepBase.update(self)
+
 class SphericalGradientDescent(GradientDescent):
     def update(self, zs, ys):
         updateW = self.weight_update(zs, ys)
+        current_weight_norm = np.linalg.norm(self.W, axis=1) # shape (p,)
+        updateW = np.einsum(
+            'ja,jab->jb',
+            updateW,
+            (np.repeat(np.eye(self.d)[np.newaxis,:, :], self.p, axis=0) - np.einsum('ja,jb,j->jab', self.W, self.W, 1/current_weight_norm**2))
+        )
+        try:
+            assert(np.isclose(np.diag(updateW @ self.W.T), 0).all())
+        except AssertionError as e:
+            print(updateW @ self.W.T)
+            print(np.diag(updateW @ self.W.T))
+            raise e
         self.W_s.append(
             (self.W + updateW) / np.linalg.norm(self.W + updateW, axis=1, keepdims=True)
         )

@@ -1,6 +1,6 @@
 import numpy as np
 
-from .base import SpecializedOverlapsBase, SphericalOverlapsBase
+from .base import SpecializedOverlapsBase, ProjectedOverlapsBase
 
 class PolynomialPolynomialOverlapsBase(SpecializedOverlapsBase):
     def compute_expected_values(self):
@@ -187,11 +187,11 @@ class H4H4Overlaps(PolynomialPolynomialOverlapsBase):
         )
     
 
-class SphericalH2H2Overlaps(SphericalOverlapsBase, H2H2Overlaps):
+class ProjectedH2H2Overlaps(ProjectedOverlapsBase, H2H2Overlaps):
     pass
 
-class SphericalH3H3Overlaps(SphericalOverlapsBase, H3H3Overlaps):
+class ProjectedH3H3Overlaps(ProjectedOverlapsBase, H3H3Overlaps):
     pass
 
-class SphericalH4H4Overlaps(SphericalOverlapsBase, H4H4Overlaps):
+class ProjectedH4H4Overlaps(ProjectedOverlapsBase, H4H4Overlaps):
     pass
