@@ -1,6 +1,6 @@
-from giant_learning.gradient_descent import SphericalGradientDescent, GradientDescent
+from giant_learning.gradient_descent import ProjectedGradientDescent, GradientDescent
 from giant_learning.montecarlo_overlaps import MonteCarloOverlaps
-from giant_learning.poly_poly import SphericalH2H2Overlaps, H2H2Overlaps
+from giant_learning.poly_poly import ProjectedH2H2Overlaps, H2H2Overlaps
 
 import numpy as np
 from scipy.special import erf
@@ -46,13 +46,13 @@ for i,d in enumerate(ds):
         # print(P, M0, Q0)
 
         # Create a gradient descent object
-        gd = SphericalGradientDescent(
+        gd = ProjectedGradientDescent(
             target, Wtarget, n,
             activation, W0, a0, activation_derivative,
             gamma, noise, predictor_interaction=not predictor_interaction,
             test_size = None, analytical_error= 'H2H2'
         )
-        spherical_gd = SphericalGradientDescent(
+        spherical_gd = ProjectedGradientDescent(
             target, Wtarget, n,
             activation, W0, a0, activation_derivative,
             gamma, noise, predictor_interaction=predictor_interaction,
@@ -65,13 +65,13 @@ for i,d in enumerate(ds):
         simu_test_errors[seed, i, :] = gd.test_errors
         spherical_simu_test_errors[seed, i, :] = spherical_gd.test_errors
         offdiag = (False if n == 1 else True)
-        h2h2 = SphericalH2H2Overlaps(
+        h2h2 = ProjectedH2H2Overlaps(
             P, M0, Q0, a0,
             gamma, noise,
             I4_diagonal=True, I4_offdiagonal=offdiag,
             predictor_interaction=not predictor_interaction)
         
-        h2h2_spherical = SphericalH2H2Overlaps(
+        h2h2_spherical = ProjectedH2H2Overlaps(
             P, M0, Q0, a0,
             gamma, noise,
             I4_diagonal=True, I4_offdiagonal=offdiag,

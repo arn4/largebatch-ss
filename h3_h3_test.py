@@ -1,6 +1,6 @@
-from giant_learning.gradient_descent import SphericalGradientDescent, GradientDescent
+from giant_learning.gradient_descent import ProjectedGradientDescent, GradientDescent
 from giant_learning.montecarlo_overlaps import MonteCarloOverlaps
-from giant_learning.poly_poly import SphericalH3H3Overlaps, H3H3Overlaps
+from giant_learning.poly_poly import ProjectedH3H3Overlaps, H3H3Overlaps
 
 import numpy as np
 from scipy.special import erf
@@ -18,7 +18,7 @@ target = H3H3Overlaps._target
 activation = H3H3Overlaps._activation
 activation_derivative = H3H3Overlaps._activation_derivative
 nseeds = 1
-ds = np.logspace(10,10,base=2,num=1,dtype=int)
+ds = np.logspace(8,10,base=2,num=3,dtype=int)
 
 ### save test error as a function of time for each seed and each d ###
 simu_test_errors = np.zeros((nseeds, len(ds), T+1))
@@ -28,7 +28,7 @@ spherical_test_errors = np.zeros((nseeds, len(ds), T+1))
 for i,d in enumerate(ds):
     n = int(np.power(d,1.3))
     t = 4/np.sqrt(d)  ### fix initial overlap
-    gamma = .04 * n * np.power(d,-3/2)
+    gamma = .04 * n * np.power(d,-5/2)
     print(f'NOW Running d = {d}')
     for seed in range(nseeds):
         print(f'Seed = {seed}')
@@ -49,13 +49,13 @@ for i,d in enumerate(ds):
         print(f'Q0 = {Q0}')
 
         # Create a gradient descent object
-        gd = SphericalGradientDescent(
+        gd = ProjectedGradientDescent(
             target, Wtarget, n,
             activation, W0, a0, activation_derivative,
             gamma, noise, predictor_interaction=not predictor_interaction,
             test_size = None, analytical_error= 'H3H3'
         )
-        spherical_gd = SphericalGradientDescent(
+        spherical_gd = ProjectedGradientDescent(
             target, Wtarget, n,
             activation, W0, a0, activation_derivative,
             gamma, noise, predictor_interaction=predictor_interaction,
@@ -71,13 +71,13 @@ for i,d in enumerate(ds):
         simu_test_errors[seed, i, :] = gd.test_errors
         spherical_simu_test_errors[seed, i, :] = spherical_gd.test_errors
         offdiag = (False if n == 1 else True)
-        h3h3 = SphericalH3H3Overlaps(
+        h3h3 = ProjectedH3H3Overlaps(
             P, M0, Q0, a0,
             gamma, noise,
             I4_diagonal=d/n, I4_offdiagonal=offdiag,
             predictor_interaction=not predictor_interaction)
         
-        h3h3_spherical = SphericalH3H3Overlaps(
+        h3h3_spherical = ProjectedH3H3Overlaps(
             P, M0, Q0, a0,
             gamma, noise,
             I4_diagonal=d/n, I4_offdiagonal=offdiag,
