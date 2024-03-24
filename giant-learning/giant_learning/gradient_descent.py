@@ -14,7 +14,7 @@ class GradientDescent(GiantStepBase):
                  gamma: float, noise: float,
                  predictor_interaction: bool=True,
                  second_layer_update: bool=False,
-                 resampling = True,
+                 resample_every: int = 1,
                  seed: int = 0, test_size = None,
                  analytical_error = None):
         super().__init__(target, W0.shape[0], W_target.shape[0], activation, a0, activation_derivative, gamma, noise, predictor_interaction, second_layer_update)
@@ -26,9 +26,8 @@ class GradientDescent(GiantStepBase):
         self.W_target = W_target.copy()
         self.W_s = [W0.copy()]
 
-        self.resampling = resampling
-        if not resampling:
-            self.fixed_zs, self.fixed_ys = self.samples(self.n)
+        self.resample_every = resample_every
+        self.zs, self.ys = (None, None)
 
         self.analytical_error = analytical_error
         if self.analytical_error is None:
@@ -93,20 +92,9 @@ class GradientDescent(GiantStepBase):
 
     def train(self, steps, verbose=False):
         for step in tqdm(range(steps), disable=not verbose):
-            if self.resampling:
-                zs, ys = self.samples(self.n)
-                self.update(zs, ys)
-            # if self.resampling == 'SAM':
-            #     "Now implementing the SAM mechanism"
-            #     if step % 2 == 0:
-            #         zs , ys = self.samples(self.n)
-            #         self.update(zs, ys)
-            #         self.fixed_ys = ys
-            #         self.fixed_zs = zs
-            #     else: 
-            #         self.update(self.fixed_zs, self.fixed_ys) 
-            else:
-                self.update(self.fixed_zs, self.fixed_ys)
+            if self.resample_every > 1 and step % self.resample_every == 0:
+                self.zs, self.ys = self.samples(self.n)
+            self.update(self.zs, self.ys)
             self.measure()
 
 class ProjectedGradientDescent(GradientDescent):

@@ -1,6 +1,6 @@
 from giant_learning.gradient_descent import SphericalGradientDescent, GradientDescent
 from giant_learning.montecarlo_overlaps import MonteCarloOverlaps
-from giant_learning.poly_poly import SphericalH3H3Overlaps, H3H3Overlaps
+from giant_learning.poly_poly import H3H3Overlaps
 
 import numpy as np
 from scipy.special import erf
@@ -17,7 +17,7 @@ activation = H3H3Overlaps._activation
 activation_derivative = H3H3Overlaps._activation_derivative
 nseeds = 1
 ds = np.logspace(7,10,base=2,num=1,dtype=int)
-resampling = 'SAM'
+resample_every = 2
 ### save test error as a function of time for each seed and each d ###
 T = 5*max(ds)**2
 simu_test_errors = np.zeros((nseeds, len(ds), T+1))
@@ -49,7 +49,7 @@ for i,d in enumerate(ds):
             target, Wtarget, n,
             activation, W0, a0, activation_derivative,
             gamma, noise, predictor_interaction = not predictor_interaction,
-            test_size = None, analytical_error= 'H3H3', resampling = resampling
+            test_size = None, analytical_error= 'H3H3', resample_every = resample_every
         )
 
         gd.train(T)

@@ -1,6 +1,6 @@
 from giant_learning.gradient_descent import SphericalGradientDescent, GradientDescent
 from giant_learning.montecarlo_overlaps import MonteCarloOverlaps
-from giant_learning.poly_poly import SphericalH3H3Overlaps, H3H3Overlaps
+from giant_learning.poly_poly import H3H3Overlaps
 
 import numpy as np
 from scipy.special import erf
@@ -16,7 +16,7 @@ target = H3H3Overlaps._target
 activation = H3H3Overlaps._activation
 activation_derivative = H3H3Overlaps._activation_derivative
 nseeds = 1
-ds = np.logspace(7,10,base=2,num=1,dtype=int)
+ds = np.logspace(7,10,base=2,num=4,dtype=int)
 
 ### save test error as a function of time for each seed and each d ###
 T = 5*max(ds)**2
@@ -55,7 +55,7 @@ for i,d in enumerate(ds):
         gd.train(T)
         Ws = np.array(gd.W_s)
         # Measure cosine similarity between Ws and Wtarget as a function of time
-        Ms = Ws @ Wtarget.T / d 
+        Ms = Ws @ Wtarget.T
 
         print(f'Ms.shape = {Ms.shape}')
 
@@ -68,11 +68,11 @@ for i,d in enumerate(ds):
 for i,d in enumerate(ds):
     # pass
     # simu_plot = plt.errorbar(np.arange(T+1), np.mean(simu_test_errors[:,i,:], axis=0), yerr=np.std(simu_test_errors[:,i,:], axis=0), label=f'SGD Simulation', marker='x', ls='', color='red') 
-    plt.axvline(x=d^2, color='black', linestyle='--', label=r'T=d^2')
-    plt.plot(np.arange(T+1), Ms[:,0])
+    plt.axvline(x=d**2, color='black', linestyle='--', label=f'T=d^2 ({d})')
+    plt.plot(np.arange(T+1), Ms[:,0,0])
 plt.xlabel('Steps')
 plt.ylabel('Test error')
-plt.xscale('log')
+# plt.xscale('log')
 plt.yscale('log')
 plt.legend()
 plt.show()
