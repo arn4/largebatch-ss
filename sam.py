@@ -73,7 +73,7 @@ for i,d in enumerate(ds):
 
 ### Plot the average test error with std error bars as a function of time for different d ### 
 ### 2 subplots: first comparing the overlap os SAM vs SGD, second comparing test errors for different d ###
-ax, fig = plt.subplots(1,2, figsize=(10,5))
+fig, ax = plt.subplots(1,2, figsize=(10,5))
 for i,d in enumerate(ds):
     # Test errors
     ax[0].errorbar(np.arange(T+1), np.mean(simu_test_errors[:,i,:], axis=0), yerr=np.std(simu_test_errors[:,i,:], axis=0), label=f'SGD d={d}', marker='x', ls='')

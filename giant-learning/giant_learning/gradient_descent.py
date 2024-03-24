@@ -27,7 +27,8 @@ class GradientDescent(GiantStepBase):
         self.W_s = [W0.copy()]
 
         self.resample_every = resample_every
-        self.zs, self.ys = (None, None)
+        # self.zs, self.ys = (None, None)
+        self.zs, self.ys = self.samples(self.n)
 
         self.analytical_error = analytical_error
         if self.analytical_error is None:
