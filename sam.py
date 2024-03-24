@@ -16,8 +16,8 @@ target = H3H3Overlaps._target
 activation = H3H3Overlaps._activation
 activation_derivative = H3H3Overlaps._activation_derivative
 nseeds = 1
-ds = np.logspace(7,10,base=2,num=1,dtype=int)
-T = 5*max(ds)**2
+ds = np.logspace(6,10,base=2,num=1,dtype=int)
+T = 10*max(ds)**2
 simu_test_errors = np.zeros((nseeds, len(ds), T+1))
 simu_test_errors_sam = np.zeros((nseeds, len(ds), T+1))
 for i,d in enumerate(ds):
@@ -42,7 +42,9 @@ for i,d in enumerate(ds):
         print(f'P = {P}')
         print(f'M0 = {M0}')
         print(f'Q0 = {Q0}')
-
+        if M0[0,0] < 0:
+            W0 = -W0
+            M0 = -M0
         # Standard projected GD 
         gd = SphericalGradientDescent(
             target, Wtarget, n,
@@ -73,14 +75,14 @@ for i,d in enumerate(ds):
 
 ### Plot the average test error with std error bars as a function of time for different d ### 
 ### 2 subplots: first comparing the overlap os SAM vs SGD, second comparing test errors for different d ###
-fig, ax = plt.subplots(1,2, figsize=(10,5))
+fig, ax = plt.subplots(1,2, figsize=(12,6))
 for i,d in enumerate(ds):
     # Test errors
     ax[0].errorbar(np.arange(T+1), np.mean(simu_test_errors[:,i,:], axis=0), yerr=np.std(simu_test_errors[:,i,:], axis=0), label=f'SGD d={d}', marker='x', ls='')
     ax[0].errorbar(np.arange(T+1), np.mean(simu_test_errors_sam[:,i,:], axis=0), yerr=np.std(simu_test_errors_sam[:,i,:], axis=0), label=f'SAM d={d}', marker='x', ls='')
     # Overlaps
-    ax[1].plot(np.arange(T+1), np.mean(Ms, axis=0), label=f'SGD d={d}')
-    ax[1].plot(np.arange(T+1), np.mean(Ms_sam, axis=0), label=f'SAM d={d}')
+    ax[1].plot(np.arange(T+1), Ms[:,0], label=f'SGD d={d}')
+    ax[1].plot(np.arange(T+1), Ms_sam[:,0], label=f'SAM d={d}')
 ax[0].axvline(x=d**2, color='k', ls='--')
 ax[0].set_xlabel('Steps')
 ax[0].set_ylabel('Test error')
