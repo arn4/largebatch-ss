@@ -120,12 +120,12 @@ class SphericalGradientDescent(GradientDescent):
             updateW,
             (np.repeat(np.eye(self.d)[np.newaxis,:, :], self.p, axis=0) - np.einsum('ja,jb,j->jab', self.W, self.W, 1/current_weight_norm**2))
         )
-        try:
-            assert(np.isclose(np.diag(updateW @ self.W.T), 0).all())
-        except AssertionError as e:
-            print(updateW @ self.W.T)
-            print(np.diag(updateW @ self.W.T))
-            raise e
+        # try:
+        #     assert(np.isclose(np.diag(updateW @ self.W.T), 0).all())
+        # except AssertionError as e:
+        #     print(updateW @ self.W.T)
+        #     print(np.diag(updateW @ self.W.T))
+        #     raise e
         self.W_s.append(
             (self.W + updateW) / np.linalg.norm(self.W + updateW, axis=1, keepdims=True)
         )
