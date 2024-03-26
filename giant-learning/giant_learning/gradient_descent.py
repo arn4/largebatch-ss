@@ -135,3 +135,12 @@ class SphericalGradientDescent(GradientDescent):
             self.a_s.append(self.a)
 
         GiantStepBase.update(self)
+
+class SAM(GradientDescent):
+    def weight_update(self, zs, ys):
+        if self.predictor_interaction:
+            displacements = ys - np.apply_along_axis(self.network, -1, zs @ self.W.T)
+        else:
+            displacements = ys
+        gradW = lambda W: self.gamma * 1/(self.n*self.p) * np.einsum('j,uj,u,ui->ji',self.a,self.activation_derivative(zs @ W.T),displacements,zs)
+        return gradW(self.W + gradW(self.W)) 

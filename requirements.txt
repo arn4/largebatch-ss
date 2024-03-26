@@ -1,6 +1,8 @@
 contourpy==1.0.7
 cycler==0.11.0
+Cython==3.0.9
 fonttools==4.39.4
+-e git+ssh://git@github.com/arn4/largebatch-ss.git@03e8e9a2d4edfcf2f49704959335689e1f09e451#egg=giant_learning&subdirectory=giant-learning
 joblib==1.2.0
 kiwisolver==1.4.4
 matplotlib==3.7.1
@@ -14,4 +16,3 @@ scipy==1.10.1
 six==1.16.0
 threadpoolctl==3.1.0
 tqdm==4.62.3
-Cython==0.29.24
