@@ -16,31 +16,36 @@ target = H3H3Overlaps._target
 activation = H3H3Overlaps._activation
 activation_derivative = H3H3Overlaps._activation_derivative
 nseeds = 1
-ds = np.logspace(7,9,base=2,num=4,dtype=int)
+ds = [128, 256]
 
 ### save test error as a function of time for each seed and each d ###
-T = 2*max(ds)**2
+T = 10*max(ds)
 simu_test_errors = np.zeros((nseeds, len(ds), T+1))
 Ms_projected = np.zeros((nseeds, len(ds), T+1, p, k))
 Ms_spherical = np.zeros((nseeds, len(ds), T+1, p, k))
 for i,d in enumerate(ds):
-    n = int(d)
-    t = 1/np.sqrt(d)  ### fix initial overlap
+    # n = int(d)
+    n = 1
+    t = 1/np.sqrt(d) ### fix initial overlap
     gamma = .01 * n * np.power(d,-3/2)
     print(f'NOW Running d = {d}')
     for seed in range(nseeds):
         print(f'Seed = {seed}')
-        rng = np.random.default_rng(seed+1)
+        rng = np.random.default_rng(seed)
         Wtarget = orth((normalize(rng.normal(size=(k,d)), axis=1, norm='l2')).T).T
         Wtild = normalize(rng.normal(size=(p,d)), axis=1, norm='l2')
         Wtild_target = np.einsum('ji,ri,rh->jh', Wtild , Wtarget ,Wtarget)
         W0_orth =  normalize(Wtild - Wtild_target, axis=1, norm='l2')
-        W0 = -(t*normalize(Wtild_target,norm='l2',axis=1) + np.sqrt(1-t**2)*W0_orth)
+        W0 = (t*normalize(Wtild_target,norm='l2',axis=1) + np.sqrt(1-t**2)*W0_orth)
         a0 = np.ones(p) ### It is changed with the new version of the package. The 1/p is included in giant-learning ###
 
         P = Wtarget @ Wtarget.T
         M0 = W0 @ Wtarget.T
         Q0 = W0 @ W0.T
+
+        if M0[0,0] > 0: # CAMBIALOOOOOOOOOOOOHHHHOH
+            W0 = -W0
+            M0 = -M0
 
         print(f'P = {P}')
         print(f'M0 = {M0}')
@@ -51,14 +56,16 @@ for i,d in enumerate(ds):
             target, Wtarget, n,
             activation, W0, a0, activation_derivative,
             gamma, noise, predictor_interaction = predictor_interaction,
-            test_size = None, analytical_error= 'H3H3'
+            test_size = None, analytical_error= 'H3H3',
+            seed = 0
         )
 
         gd_spherical = SphericalGradientDescent(
             target, Wtarget, n,
             activation, W0, a0, activation_derivative,
             gamma, noise, predictor_interaction = predictor_interaction,
-            test_size = None, analytical_error= 'H3H3'
+            test_size = None, analytical_error= 'H3H3',
+            seed = 0
         )
 
         gd_projected.train(T)
@@ -81,13 +88,13 @@ for i,d in enumerate(ds):
 for i,d in enumerate(ds):
     # pass
     # simu_plot = plt.errorbar(np.arange(T+1), np.mean(simu_test_errors[:,i,:], axis=0), yerr=np.std(simu_test_errors[:,i,:], axis=0), label=f'SGD Simulation', marker='x', ls='', color='red') 
-    plt.axvline(x=d**2, color='black', linestyle='--', label=f'T=d^2 ({d})')
-    plt.plot(np.arange(T+1), Ms_projected[0,i,:,0,0], label=f'Projected SGD d={d}')
-    plt.plot(np.arange(T+1), Ms_spherical[0,i,:,0,0], label=f'Spherical SGD d={d}')
+    plt.axvline(x=1, color='black', linestyle='--', label=f'T=d^2 ({d})')
+    plt.plot(np.arange(T+1)/d, Ms_projected[0,i,:,0,0], label=f'Projected SGD d={d}')
+    plt.plot(np.arange(T+1)/d, Ms_spherical[0,i,:,0,0], label=f'Spherical SGD d={d}')
 plt.xlabel('Steps')
 plt.ylabel('Test error')
-plt.xscale('log')
-plt.yscale('log')
+# plt.xscale('log')
+# plt.yscale('log')
 plt.legend()
 plt.show()
 

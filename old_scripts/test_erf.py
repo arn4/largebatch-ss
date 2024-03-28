@@ -1,4 +1,4 @@
-from giant_learning.gradient_descent import SphericalGradientDescent, GradientDescent
+from giant_learning.gradient_descent import ProjectedGradientDescent, GradientDescent
 from giant_learning.montecarlo_overlaps import MonteCarloOverlaps
 from giant_learning.erf_erf import SphericalErfErfOverlaps, ErfErfOverlaps
 
@@ -56,7 +56,7 @@ for i,d in enumerate(ds):
             activation, W0, a0, activation_derivative, 
             gamma, noise, second_layer_update = False, test_size = None, analytical_error= 'erferf'
         )
-        spherical_gd = SphericalGradientDescent(
+        spherical_gd = ProjectedGradientDescent(
             target, Wtarget, n,
             activation, W0, a0, activation_derivative, 
             gamma, noise, second_layer_update = False, test_size = None, analytical_error= 'erferf'
