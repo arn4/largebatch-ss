@@ -92,7 +92,7 @@ class GradientDescent(GiantStepBase):
         self.test_errors.append(self.error(zs, ys))
 
     def train(self, steps, verbose=False):
-        for step in tqdm(range(steps), disable=not verbose):
+        for step in tqdm(range(steps), disable=not verbose, mininterval=2):
             if self.resample_every > 0 and step % self.resample_every == 0:
                 self.zs, self.ys = self.samples(self.n)
             self.update(self.zs, self.ys)
