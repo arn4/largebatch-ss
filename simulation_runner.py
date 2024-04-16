@@ -119,6 +119,10 @@ for mu, delta, d, T, ic_seed in params:
         filename = f"computation-database/{'debug' if debug else ''}/H3H3_delta{delta}_mu{mu}_d{d}_T{T}_icseed{ic_seed}_seed{seed}.npz"
 
         if force_run or not os.path.exists(filename):
+            gd_plain.train(T, verbose=True)
+            print('Trained gd_plain')
+            gd_correlation.train(T, verbose=True)
+            print('Trained gd_correlation')
             spherical_gd_plain.train(T, verbose=True)
             print('Trained spherical_gd_plain')
             spherical_gd_correlation.train(T, verbose=True)
@@ -128,15 +132,15 @@ for mu, delta, d, T, ic_seed in params:
             projected_gd_correlation.train(T, verbose=True)
             print('Trained projected_gd_correlation')
         
-            # gd_plain_errors = gd_plain.test_errors
-            # gd_correlation_errors = gd_correlation.test_errors
+            gd_plain_errors = gd_plain.test_errors
+            gd_correlation_errors = gd_correlation.test_errors
             projected_gd_plain_errors = projected_gd_plain.test_errors
             projected_gd_correlation_errors = projected_gd_correlation.test_errors
             spherical_gd_plain_errors = spherical_gd_plain.test_errors
             spherical_gd_correlation_errors = spherical_gd_correlation.test_errors
 
-            # gd_plain_m = np.einsum('tja,ra->tjr', gd_plain.W_s, Wtarget).reshape(T+1,1)
-            # gd_correlation_m = np.einsum('tja,ra->tjr', gd_correlation.W_s, Wtarget).reshape(T+1,1)
+            gd_plain_m = np.einsum('tja,ra->tjr', gd_plain.W_s, Wtarget).reshape(T+1,1)
+            gd_correlation_m = np.einsum('tja,ra->tjr', gd_correlation.W_s, Wtarget).reshape(T+1,1)
             projected_gd_plain_m = np.einsum('tja,ra->tjr', projected_gd_plain.W_s, Wtarget).reshape(T+1)
             projected_gd_correlation_m = np.einsum('tja,ra->tjr', projected_gd_correlation.W_s, Wtarget).reshape(T+1)
             spherical_gd_plain_m = np.einsum('tja,ra->tjr', spherical_gd_plain.W_s, Wtarget).reshape(T+1,1)
@@ -151,6 +155,7 @@ for mu, delta, d, T, ic_seed in params:
                 spherical_gd_plain_errors=spherical_gd_plain_errors,
                 spherical_gd_correlation_errors=spherical_gd_correlation_errors,
                 #
+
                 gd_plain_m=gd_plain_m,
                 gd_correlation_m=gd_correlation_m,
                 projected_gd_plain_m=projected_gd_plain_m,
