@@ -4,6 +4,8 @@ from tqdm import tqdm
 
 class GiantStepBase():
     _adaptive_percentage_threshold = 0.6
+    _adaptive_lr_decay = .995
+    _adaptive_switch_lr_jump = .1
     def __init__(self,
                  target: callable, p: int, k: int,
                  activation: callable, a0: np.array, activation_derivative: callable,
@@ -39,8 +41,10 @@ class GiantStepBase():
     
     def update(self):
         if self.adaptive_predictor_interaction and self.test_errors[-1] < self._adaptive_percentage_threshold * self.test_errors[0]:
+            if not self.predictor_interaction:
+                self.gamma *= self._adaptive_switch_lr_jump
             self.predictor_interaction = True
-            self.gamma *= .995
+            self.gamma *= self._adaptive_lr_decay
             # self.adaptive_predictor_interaction = False
     
 class OverlapsBase(GiantStepBase):
