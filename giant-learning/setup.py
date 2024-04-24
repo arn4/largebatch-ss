@@ -28,7 +28,7 @@ def get_extensions():
   extra_compile_args = [
     '-O3',
     '-funroll-loops',
-    '-std=c++20'
+    '-std=c++17'
   ]
 
   cython_erf_erf = Extension(
