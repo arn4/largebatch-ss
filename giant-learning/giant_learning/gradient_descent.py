@@ -55,6 +55,8 @@ class GradientDescent(GiantStepBase):
             return H4H4Overlaps(self.W_target @ self.W_target.T, self.W @ self.W_target.T, self.W @ self.W.T, self.a, self.gamma, self.noise).error()
         elif self.analytical_error == 'hermite2ReLuStaircase2':
             return Hermite2Relu_Staricase2(self.W_target @ self.W_target.T, self.W @ self.W_target.T, self.W @ self.W.T, self.a, self.gamma, self.noise).error()
+        elif self.analytical_error == 'skip':
+            return 0
         elif self.analytical_error is None:
             if zs is None and ys is None:
                 zs, ys = self.zs_test, self.ys_test
@@ -144,3 +146,9 @@ class SAM(GradientDescent):
             displacements = ys
         gradW = lambda W: self.gamma * 1/(self.n*self.p) * np.einsum('j,uj,u,ui->ji',self.a,self.activation_derivative(zs @ W.T),displacements,zs)
         return gradW(self.W + gradW(self.W)) 
+
+class ProjectedSAM(ProjectedGradientDescent):
+    weight_update = SAM.weight_update
+
+class SphericalSAM(SphericalGradientDescent):
+    weight_update = SAM.weight_update
