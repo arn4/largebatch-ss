@@ -10,7 +10,7 @@ class GiantStepBase():
                  target: callable, p: int, k: int,
                  activation: callable, a0: np.array, activation_derivative: callable,
                  gamma: float, noise: float,
-                 predictor_interaction: bool, second_layer_update: bool
+                 predictor_interaction: bool, second_layer_update: bool, lazy_memory = False
                 ):
         self.target = target
         self.activation = activation
@@ -20,6 +20,7 @@ class GiantStepBase():
         self.k = k
         self.noise = noise
         self.second_layer_update = second_layer_update
+        self.lazy_memory = lazy_memory
         if isinstance(predictor_interaction, bool):
             self.predictor_interaction = predictor_interaction
             self.adaptive_predictor_interaction = False
@@ -29,14 +30,18 @@ class GiantStepBase():
         else:
             raise ValueError('predictor_interaction must be bool or "adaptive"')
         assert(a0.shape == (p,))
-
-        self.a_s = [a0.copy()]
+        if not lazy_memory:
+            self.a_s = [a0.copy()]
+        else:
+            self._last_a = a0.copy()
         self.test_errors = []
 
         self.network = lambda local_field: 1/np.sqrt(self.p) * np.dot(self.a, self.activation(local_field))
 
     @property
     def a(self):
+        if self.lazy_memory:
+            return self._last_a
         return self.a_s[-1]
     
     def update(self):

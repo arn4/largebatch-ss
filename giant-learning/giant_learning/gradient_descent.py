@@ -16,18 +16,24 @@ class GradientDescent(GiantStepBase):
                  second_layer_update: bool = False,
                  resample_every: int = 1,
                  seed: int = 0, test_size = None,
-                 analytical_error = None):
-        super().__init__(target, W0.shape[0], W_target.shape[0], activation, a0, activation_derivative, gamma, noise, predictor_interaction, second_layer_update)
+                 analytical_error = None, lazy_memory = False):
+        super().__init__(target, W0.shape[0], W_target.shape[0], activation, a0, activation_derivative, gamma, noise, predictor_interaction, second_layer_update, lazy_memory)
 
         self.d = W0.shape[1]
         self.n = n
         self.rng = np.random.default_rng(seed)
 
         self.W_target = W_target.copy()
-        self.W_s = [W0.copy()]
+        if not lazy_memory:
+            self.W_s = [W0.copy()]
+        else: 
+            self._lastW = W0.copy()
 
+        self.Ms = [W0.T @ W_target]
+        self.Qs = [W0.T @ W0]
+        self.P = W_target.T @ W_target
         self.resample_every = resample_every
-        # self.zs, self.ys = (None, None)
+
         self.zs, self.ys = self.samples(self.n)
 
         self.analytical_error = analytical_error
@@ -68,9 +74,12 @@ class GradientDescent(GiantStepBase):
     
     @property
     def W(self):
+        if self.lazy_memory:
+            return self._lastW
         return self.W_s[-1]
 
-    def weight_update(self, zs, ys):
+    
+    def _weight_loss_gradient(self, zs, ys):
         if self.predictor_interaction:
             displacements = ys - np.apply_along_axis(self.network, -1, zs @ self.W.T)
         else:
@@ -78,20 +87,31 @@ class GradientDescent(GiantStepBase):
 
         return self.gamma * 1/(self.n*self.p) * np.einsum('j,uj,u,ui->ji',self.a,self.activation_derivative(zs @ self.W.T),displacements,zs)
 
+    def _update_weight(self, zs, ys):
+        return self._weight_loss_gradient(zs, ys)
+
     def update(self, zs, ys):
-        updateW = self.weight_update(zs, ys)
-        self.W_s.append(
-            self.W + updateW
-        )
+        updateW = self._update_weight(self.zs, self.ys)
+        if self.lazy_memory:
+            self._lastW += updateW
+        else:
+            self.W_s.append(
+                self.W + updateW
+            )
         if self.second_layer_update:
             raise NotImplementedError
         else:
-            self.a_s.append(self.a)
+            if self.lazy_memory:
+                pass
+            else:
+                self.a_s.append(self.a)
 
         GiantStepBase.update(self)
 
     def measure(self, zs = None, ys = None):
         self.test_errors.append(self.error(zs, ys))
+        self.Ms.append(self.W.T @ self.W_target)
+        self.Qs.append(self.W.T @ self.W)
 
     def train(self, steps, verbose=False):
         for step in tqdm(range(steps), disable=not verbose, mininterval=2):
@@ -101,45 +121,23 @@ class GradientDescent(GiantStepBase):
             self.measure()
 
 class ProjectedGradientDescent(GradientDescent):
-    def update(self, zs, ys):
-        updateW = self.weight_update(zs, ys)
-        self.W_s.append(
-            (self.W + updateW) / np.linalg.norm(self.W + updateW, axis=1, keepdims=True)
-        )
-        if self.second_layer_update:
-            raise NotImplementedError
-        else:
-            self.a_s.append(self.a)
-
-        GiantStepBase.update(self)
+    def _update_weight(self, zs, ys):
+        grad = self._weight_loss_gradient(zs, ys)
+        return (self.W + grad) / np.linalg.norm(self.W + grad, axis=1, keepdims=True)
 
 class SphericalGradientDescent(GradientDescent):
-    def update(self, zs, ys):
-        updateW = self.weight_update(zs, ys)
+    def _update_weight(self, zs, ys):
+        grad = self._weight_loss_gradient(zs, ys)
         current_weight_norm = np.linalg.norm(self.W, axis=1) # shape (p,)
-        updateW = np.einsum(
+        spherical_grad = np.einsum(
             'ja,jab->jb',
-            updateW,
+            grad,
             (np.repeat(np.eye(self.d)[np.newaxis,:, :], self.p, axis=0) - np.einsum('ja,jb,j->jab', self.W, self.W, 1/current_weight_norm**2))
         )
-        # try:
-        #     assert(np.isclose(np.diag(updateW @ self.W.T), 0).all())
-        # except AssertionError as e:
-        #     print(updateW @ self.W.T)
-        #     print(np.diag(updateW @ self.W.T))
-        #     raise e
-        self.W_s.append(
-            (self.W + updateW) / np.linalg.norm(self.W + updateW, axis=1, keepdims=True)
-        )
-        if self.second_layer_update:
-            raise NotImplementedError
-        else:
-            self.a_s.append(self.a)
-
-        GiantStepBase.update(self)
+        return (self.W + spherical_grad) / np.linalg.norm(self.W + spherical_grad, axis=1, keepdims=True)
 
 class SAM(GradientDescent):
-    def weight_update(self, zs, ys):
+    def _weight_loss_gradient(self, zs, ys):
         if self.predictor_interaction:
             displacements = ys - np.apply_along_axis(self.network, -1, zs @ self.W.T)
         else:
@@ -148,7 +146,7 @@ class SAM(GradientDescent):
         return gradW(self.W + gradW(self.W)) 
 
 class ProjectedSAM(ProjectedGradientDescent):
-    weight_update = SAM.weight_update
+    _weight_loss_gradient = SAM._weight_loss_gradient
 
 class SphericalSAM(SphericalGradientDescent):
-    weight_update = SAM.weight_update
+    _weight_loss_gradient = SAM._weight_loss_gradient
