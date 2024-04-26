@@ -29,9 +29,9 @@ class GradientDescent(GiantStepBase):
         else: 
             self._lastW = W0.copy()
 
-        self.Ms = [W0.T @ W_target]
-        self.Qs = [W0.T @ W0]
-        self.P = W_target.T @ W_target
+        self.Ms = [W0 @ W_target.T]
+        self.Qs = [W0 @ W0.T]
+        self.P = W_target @ W_target.T
         self.resample_every = resample_every
 
         self.zs, self.ys = self.samples(self.n)
@@ -110,8 +110,8 @@ class GradientDescent(GiantStepBase):
 
     def measure(self, zs = None, ys = None):
         self.test_errors.append(self.error(zs, ys))
-        self.Ms.append(self.W.T @ self.W_target)
-        self.Qs.append(self.W.T @ self.W)
+        self.Ms.append(self.W @ self.W_target.T)
+        self.Qs.append(self.W @ self.W.T)
 
     def train(self, steps, verbose=False):
         for step in tqdm(range(steps), disable=not verbose, mininterval=2):
