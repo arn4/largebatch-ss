@@ -36,7 +36,7 @@ class GiantStepBase():
             self._last_a = a0.copy()
         self.test_errors = []
 
-        self.network = lambda local_field: 1/np.sqrt(self.p) * np.dot(self.a, self.activation(local_field))
+        self.network = lambda local_field: 1/self.p * np.dot(self.a, self.activation(local_field))
 
     @property
     def a(self):
@@ -100,24 +100,23 @@ class OverlapsBase(GiantStepBase):
             super().update()
 
     def overlap_update(self):
-        inverse_Qbot = inverse_matrix(self.Q - self.M @ self.inverse_P @ self.M.T)
         expected_value_target, expected_value_network, expected_I4 = self.compute_expected_values()
-        expected_value_orthogonal = expected_value_network - self.M @ self.inverse_P @ (expected_value_target.T)
 
         updateM = np.zeros(shape=(self.p, self.k))
         updateQ = np.zeros(shape=(self.p, self.p))
 
         if self.I3:
-            updateM = self.gamma/self.p * np.einsum('j,jr->jr', self.a, expected_value_target)
-
-            updateQ = (self.gamma/self.p) * (
+            updateM += self.gamma/self.p * np.einsum('j,jr->jr', self.a, expected_value_target)
+            updateQ += (self.gamma/self.p) * (
                     np.einsum('j,jl->jl', self.a, expected_value_network) +
                     np.einsum('l,lj->jl', self.a, expected_value_network)
                 )
         if self.I4_diagonal:
-            updateQ += (self.gamma/self.p)**2 * self._invalpha * np.einsum('j,l->jl', self.a, self.a ) * expected_I4
+            updateQ += (self.gamma/self.p)**2 * self._invalpha * np.einsum('j,l->jl', self.a, self.a) * expected_I4
 
         if self.I4_offdiagonal:
+            inverse_Qbot = inverse_matrix(self.Q - self.M @ self.inverse_P @ self.M.T)
+            expected_value_orthogonal = expected_value_network - self.M @ self.inverse_P @ (expected_value_target.T)
             updateQ += (self.gamma/self.p)**2 * np.einsum('j,l->jl', self.a, self.a) * (
                 np.einsum('jr,rt,lt->jl', expected_value_target, self.inverse_P, expected_value_target) +
                 np.einsum('jm,mn,ln->jl', expected_value_orthogonal, inverse_Qbot, expected_value_orthogonal)
