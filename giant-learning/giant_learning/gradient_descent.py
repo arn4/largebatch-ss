@@ -21,16 +21,15 @@ class GradientDescent(GiantStepBase):
 
         self.d = W0.shape[1]
         self.n = n
-        self.rng = np.random.default_rng(seed)
-
+        self.rng = np.random.default_rng(seed) 
         self.W_target = W_target.copy()
         if not lazy_memory:
             self.W_s = [W0.copy()]
         else: 
             self._lastW = W0.copy()
 
-        self.Ms = [W0 @ W_target.T]
-        self.Qs = [W0 @ W0.T]
+        self.Ms = []
+        self.Qs = []
         self.P = W_target @ W_target.T
         self.resample_every = resample_every
 
@@ -84,19 +83,20 @@ class GradientDescent(GiantStepBase):
             displacements = ys - np.apply_along_axis(self.network, -1, zs @ self.W.T)
         else:
             displacements = ys
-
-        return self.gamma * 1/(self.n*self.p) * np.einsum('j,uj,u,ui->ji',self.a,self.activation_derivative(zs @ self.W.T),displacements,zs)
+        return 1/(self.n*self.p) * np.einsum('j,uj,u,ui->ji',self.a,self.activation_derivative(zs @ self.W.T),displacements,zs)
 
     def _update_weight(self, zs, ys):
-        return self._weight_loss_gradient(zs, ys)
-
+        return  self.gamma * self._weight_loss_gradient(zs, ys)
+    
+    def _new_weight(self,zs,ys):
+        return self.W + self._update_weight(self.zs, self.ys)
+    
     def update(self, zs, ys):
-        updateW = self._update_weight(self.zs, self.ys)
         if self.lazy_memory:
-            self._lastW += updateW
+            self._lastW = self._new_weight(self.zs, self.ys)
         else:
             self.W_s.append(
-                self.W + updateW
+                self._new_weight(self.zs, self.ys)
             )
         if self.second_layer_update:
             raise NotImplementedError
@@ -121,32 +121,50 @@ class GradientDescent(GiantStepBase):
             self.measure()
 
 class ProjectedGradientDescent(GradientDescent):
+    def _new_weight(self, zs, ys):
+        updateW = GradientDescent._update_weight(self, zs, ys)
+        return (self.W + updateW) / np.linalg.norm(self.W + updateW, axis=1, keepdims=True)
     def _update_weight(self, zs, ys):
-        grad = self._weight_loss_gradient(zs, ys)
-        return (self.W + grad) / np.linalg.norm(self.W + grad, axis=1, keepdims=True)
+        return self._new_weight(zs,ys) - self.W
 
 class SphericalGradientDescent(GradientDescent):
-    def _update_weight(self, zs, ys):
-        grad = self._weight_loss_gradient(zs, ys)
+    def _new_weight(self, zs, ys):
+        updateW = GradientDescent._update_weight(self, zs, ys)
         current_weight_norm = np.linalg.norm(self.W, axis=1) # shape (p,)
-        spherical_grad = np.einsum(
+        spherical_updateW = np.einsum(
             'ja,jab->jb',
-            grad,
+            updateW,
             (np.repeat(np.eye(self.d)[np.newaxis,:, :], self.p, axis=0) - np.einsum('ja,jb,j->jab', self.W, self.W, 1/current_weight_norm**2))
         )
-        return (self.W + spherical_grad) / np.linalg.norm(self.W + spherical_grad, axis=1, keepdims=True)
-
+        return (self.W + spherical_updateW) / np.linalg.norm(self.W + spherical_updateW, axis=1, keepdims=True)
+    def _update_weight(self, zs, ys):
+        return self._new_weight(zs,ys) - self.W
+    
 class SAM(GradientDescent):
+    def __init__(self,
+                 target: callable, W_target: np.array, n: int,
+                 activation: callable, W0: np.array, a0: np.array, activation_derivative: callable,
+                 gamma: float, noise: float, rho_prefactor: float,
+                 predictor_interaction: bool = True,
+                 second_layer_update: bool = False,
+                 resample_every: int = 1,
+                 seed: int = 0, test_size = None,
+                 analytical_error = None, lazy_memory = False):
+        super().__init__(target, W_target, n, activation, W0, a0, activation_derivative, gamma, noise, predictor_interaction, second_layer_update, resample_every, seed, test_size, analytical_error, lazy_memory)
+        self.rho = rho_prefactor/ self.d 
     def _weight_loss_gradient(self, zs, ys):
-        if self.predictor_interaction:
-            displacements = ys - np.apply_along_axis(self.network, -1, zs @ self.W.T)
-        else:
-            displacements = ys
-        gradW = lambda W: self.gamma * 1/(self.n*self.p) * np.einsum('j,uj,u,ui->ji',self.a,self.activation_derivative(zs @ W.T),displacements,zs)
-        return gradW(self.W + gradW(self.W)) 
+        def minusgradW(Wtilde):
+            if self.predictor_interaction:
+                displacements = ys - np.apply_along_axis(self.network, -1, zs @ Wtilde.T)
+            else:
+                displacements = ys
+            return 1/(self.n*self.p) * np.einsum('j,uj,u,ui->ji',self.a,self.activation_derivative(zs @ Wtilde.T),displacements,zs)
+        return  minusgradW(self.W + self.rho * minusgradW(self.W)) ### TO fix: a) rho; b) lambda function gradW useless; c) make sure grad is minus gradient
+    
+class ProjectedSAM(SAM, ProjectedGradientDescent):
+    # _weight_loss_gradient = SAM._weight_loss_gradient
+    pass
 
-class ProjectedSAM(ProjectedGradientDescent):
-    _weight_loss_gradient = SAM._weight_loss_gradient
-
-class SphericalSAM(SphericalGradientDescent):
-    _weight_loss_gradient = SAM._weight_loss_gradient
+class SphericalSAM(SAM, SphericalGradientDescent):
+    # _weight_loss_gradient = SAM._weight_loss_gradient
+    pass
