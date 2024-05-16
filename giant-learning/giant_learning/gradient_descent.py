@@ -140,7 +140,16 @@ class SphericalGradientDescent(GradientDescent):
     def _update_weight(self, zs, ys):
         return self._new_weight(zs,ys) - self.W
     
-class SAM(GradientDescent):
+class DisplacedSGD(GradientDescent):
+    """
+    The algorithm perform gradient descent with step size gamma, but the gradient is displaced by a factor rho in the diration of the gradient.
+    The weight update is given by:
+    w^(t+1) = w^t - gamma/n * sum_(i=1)^n grad_w L[x_i; w^t -rho * grad_w L[x_i; w^t]]
+
+    In particular:
+     - rho > 0: it performs what is known as ExtraGradient;
+     - rho < 0: it performs what is known as Sharpness-Aware Minimization (SAM).
+    """
     def __init__(self,
                  target: callable, W_target: np.array, n: int,
                  activation: callable, W0: np.array, a0: np.array, activation_derivative: callable,
@@ -151,20 +160,23 @@ class SAM(GradientDescent):
                  seed: int = 0, test_size = None,
                  analytical_error = None, lazy_memory = False):
         super().__init__(target, W_target, n, activation, W0, a0, activation_derivative, gamma, noise, predictor_interaction, second_layer_update, resample_every, seed, test_size, analytical_error, lazy_memory)
-        self.rho = rho_prefactor/ self.d 
+        self.rho = rho_prefactor * (self.p*self.n/self.d)
     def _weight_loss_gradient(self, zs, ys):
-        def minusgradW(Wtilde):
+        def minusgradW(Wtilde): # Wtilde shape (n,p,d)
+            local_field_tilde = np.einsum('ui,uji->uj', zs, Wtilde) # shape (n,p)
             if self.predictor_interaction:
-                displacements = ys - np.apply_along_axis(self.network, -1, zs @ Wtilde.T)
+                displacements = ys - np.apply_along_axis(self.network, -1, local_field_tilde) # shape (n,)
             else:
-                displacements = ys
-            return 1/(self.n*self.p) * np.einsum('j,uj,u,ui->ji',self.a,self.activation_derivative(zs @ Wtilde.T),displacements,zs)
-        return  minusgradW(self.W + self.rho * minusgradW(self.W)) ### TO fix: a) rho; b) lambda function gradW useless; c) make sure grad is minus gradient
+                displacements = ys # shape (n,)
+            return 1/(self.p) * np.einsum('j,uj,u,ui->uji',self.a,self.activation_derivative(local_field_tilde),displacements,zs) # shape (n,p,d)
+        Wdisplacement = minusgradW(np.repeat(self.W[np.newaxis,:,:], repeats=self.n, axis = 0)) # shape (n,p,d)
+        single_sample_gradient = minusgradW(self.W + self.rho * Wdisplacement) # shape (n,p,d)
+        return 1/self.n * np.sum(single_sample_gradient, axis=0) # shape (p,d)
     
-class ProjectedSAM(SAM, ProjectedGradientDescent):
-    # _weight_loss_gradient = SAM._weight_loss_gradient
+class ProjectedDisplacedSGD(DisplacedSGD, ProjectedGradientDescent):
+    # _weight_loss_gradient = DisplacedSGD._weight_loss_gradient
     pass
 
-class SphericalSAM(SAM, SphericalGradientDescent):
-    # _weight_loss_gradient = SAM._weight_loss_gradient
+class SphericalDisplacedSGD(DisplacedSGD, SphericalGradientDescent):
+    # _weight_loss_gradient = DisplacedSGD._weight_loss_gradient
     pass
