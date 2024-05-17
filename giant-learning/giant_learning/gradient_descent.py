@@ -78,7 +78,7 @@ class GradientDescent(GiantStepBase):
         return self.W_s[-1]
 
     
-    def _weight_loss_gradient(self, zs, ys):
+    def _minus_weight_loss_gradient(self, zs, ys):
         if self.predictor_interaction:
             displacements = ys - np.apply_along_axis(self.network, -1, zs @ self.W.T)
         else:
@@ -86,7 +86,7 @@ class GradientDescent(GiantStepBase):
         return 1/(self.n*self.p) * np.einsum('j,uj,u,ui->ji',self.a,self.activation_derivative(zs @ self.W.T),displacements,zs)
 
     def _update_weight(self, zs, ys):
-        return  self.gamma * self._weight_loss_gradient(zs, ys)
+        return  self.gamma * self._minus_weight_loss_gradient(zs, ys)
     
     def _new_weight(self,zs,ys):
         return self.W + self._update_weight(self.zs, self.ys)
@@ -161,7 +161,7 @@ class DisplacedSGD(GradientDescent):
                  analytical_error = None, lazy_memory = False):
         super().__init__(target, W_target, n, activation, W0, a0, activation_derivative, gamma, noise, predictor_interaction, second_layer_update, resample_every, seed, test_size, analytical_error, lazy_memory)
         self.rho = rho_prefactor * (self.p*self.n/self.d)
-    def _weight_loss_gradient(self, zs, ys):
+    def _minus_weight_loss_gradient(self, zs, ys):
         def minusgradW(Wtilde): # Wtilde shape (n,p,d)
             local_field_tilde = np.einsum('ui,uji->uj', zs, Wtilde) # shape (n,p)
             if self.predictor_interaction:
@@ -174,9 +174,22 @@ class DisplacedSGD(GradientDescent):
         return 1/self.n * np.sum(single_sample_gradient, axis=0) # shape (p,d)
     
 class ProjectedDisplacedSGD(DisplacedSGD, ProjectedGradientDescent):
-    # _weight_loss_gradient = DisplacedSGD._weight_loss_gradient
+    # _minus_weight_loss_gradient = DisplacedSGD._minus_weight_loss_gradient
     pass
 
 class SphericalDisplacedSGD(DisplacedSGD, SphericalGradientDescent):
-    # _weight_loss_gradient = DisplacedSGD._weight_loss_gradient
+    # _minus_weight_loss_gradient = DisplacedSGD._minus_weight_loss_gradient
     pass
+
+class ExponentialLossGradientDescent(GradientDescent):
+    def _minus_weight_loss_gradient(self, zs, ys): # shape zs = (n, d), shape ys = (n,)
+        local_field = np.einsum('ui,ji->uj', zs, self.W) # shape (n, p)
+        predictions = np.apply_along_axis(self.network, -1, local_field) # shape (n, )
+
+        return 1/(self.n*self.p) * np.einsum(
+            'u,j,uj,ui->ji',
+            np.exp(np.minimum(-ys * predictions,2)) * ys,
+            self.a,
+            self.activation_derivative(local_field),
+            zs
+        )
