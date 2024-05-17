@@ -160,7 +160,8 @@ class DisplacedSGD(GradientDescent):
                  seed: int = 0, test_size = None,
                  analytical_error = None, lazy_memory = False):
         super().__init__(target, W_target, n, activation, W0, a0, activation_derivative, gamma, noise, predictor_interaction, second_layer_update, resample_every, seed, test_size, analytical_error, lazy_memory)
-        self.rho = rho_prefactor * (self.p*self.n/self.d)
+        self.rho = rho_prefactor * (self.p/self.d) # If we were taking the empirical average in the inner gradient, then when could have scaled rho with $n$.
+
     def _minus_weight_loss_gradient(self, zs, ys):
         def minusgradW(Wtilde): # Wtilde shape (n,p,d)
             local_field_tilde = np.einsum('ui,uji->uj', zs, Wtilde) # shape (n,p)
